@@ -40,6 +40,8 @@
 :root {
   --sidebar-width: 240px;
   --header-height: 64px;
+  --bottom-nav-height: 68px;
+  --bottom-nav-height-mobile: 64px;
   --radius: 12px;
   --radius-lg: 16px;
   --transition: 0.18s ease;
@@ -104,23 +106,9 @@ input, textarea, select {
 }
 
 @media (max-width: 768px) {
-  html {
-    font-size: 15px;
-  }
-  body {
-    -webkit-text-size-adjust: 100%;
-  }
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-}
-
-/* Evita zoom no input quando faz focus (iOS) */
-@media (max-width: 768px) {
+  html { font-size: 15px; }
+  body { -webkit-text-size-adjust: 100%; }
   input,
   textarea,
-  select {
-    font-size: 16px !important;
-  }
+  select { font-size: 16px !important; }
 }

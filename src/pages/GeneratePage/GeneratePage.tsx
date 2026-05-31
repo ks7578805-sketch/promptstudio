@@ -7,7 +7,7 @@ import { PROVIDER_INFO } from '../../lib/types';
 const MAX_REFERENCE_IMAGES = 14;
 
 interface GeneratePageProps {
-  prompt: Prompt;
+  prompt: Prompt | null;
   onBack: () => void;
   onGenerate: (params: {
     referenceImages: string[];
@@ -69,16 +69,16 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
   const [resolution, setResolution] = useState<Resolution>('2K');
   const [count, setCount] = useState(1);
   const [dragOver, setDragOver] = useState(false);
-  const [editingPrompt, setEditingPrompt] = useState(false);
-  const [customPrompt, setCustomPrompt] = useState(prompt.prompt);
+  const [editingPrompt, setEditingPrompt] = useState(!prompt);
+  const [customPrompt, setCustomPrompt] = useState(prompt?.prompt ?? '');
   const [identityBoost, setIdentityBoost] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    setCustomPrompt(prompt.prompt);
-    setEditingPrompt(false);
-  }, [prompt.id, prompt.prompt]);
+    setCustomPrompt(prompt?.prompt ?? '');
+    setEditingPrompt(!prompt);
+  }, [prompt?.id, prompt?.prompt, prompt]);
 
   useEffect(() => {
     if (editingPrompt && textareaRef.current) {
@@ -102,7 +102,7 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
   }
 
   function handleGenerate() {
-    if (referenceImages.length === 0) return;
+    if (referenceImages.length === 0 || !customPrompt.trim()) return;
     const selectedModel: AnyImageModel = provider === 'google' ? geminiModel : openaiModel;
     onGenerate({
       referenceImages,
@@ -110,17 +110,17 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
       model: selectedModel,
       resolution,
       count,
-      customPrompt: customPrompt.trim() || prompt.prompt,
+      customPrompt: customPrompt.trim(),
       identityBoost,
     });
   }
 
   function resetPrompt() {
-    setCustomPrompt(prompt.prompt);
-    setEditingPrompt(false);
+    setCustomPrompt(prompt?.prompt ?? '');
+    setEditingPrompt(!prompt);
   }
 
-  const isEdited = customPrompt.trim() !== prompt.prompt.trim();
+  const isEdited = !!prompt && customPrompt.trim() !== prompt.prompt.trim();
   const currentModels = provider === 'google' ? GEMINI_MODELS : OPENAI_MODELS;
   const currentModel: string = provider === 'google' ? geminiModel : openaiModel;
   const canAddMore = referenceImages.length < MAX_REFERENCE_IMAGES;
@@ -136,55 +136,69 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
       <div className={styles.step}>
         <div className={styles.stepHeader}>
           <div className={styles.stepNumber}>1</div>
-          <div className={styles.stepTitle}>Estilo escolhido</div>
-        </div>
-        <div className={styles.styleCard}>
-          {prompt.image ? (
-            <img className={styles.styleThumb} src={prompt.image} alt={prompt.title} />
-          ) : (
-            <div className={styles.stylePlaceholder}>📷</div>
-          )}
-          <div className={styles.styleInfo}>
-            <div className={styles.styleName}>
-              {prompt.title}
-              {isEdited && <span className={styles.editedBadge}>editado</span>}
-            </div>
-            {!editingPrompt ? (
-              <div className={styles.promptPreview}>
-                <span className={styles.promptText}>{customPrompt}</span>
-                <button
-                  className={styles.editPromptBtn}
-                  onClick={() => setEditingPrompt(true)}
-                  title="Editar prompt"
-                  aria-label="Editar prompt"
-                >
-                  ✎
-                </button>
-              </div>
-            ) : (
-              <div className={styles.promptEdit}>
-                <textarea
-                  ref={textareaRef}
-                  className={styles.promptTextarea}
-                  value={customPrompt}
-                  onChange={e => setCustomPrompt(e.target.value)}
-                  rows={6}
-                  placeholder="Escreva o prompt..."
-                />
-                <div className={styles.promptEditActions}>
-                  {isEdited && (
-                    <button className={styles.resetBtn} onClick={resetPrompt}>
-                      ↺ Restaurar original
-                    </button>
-                  )}
-                  <button className={styles.doneBtn} onClick={() => setEditingPrompt(false)}>
-                    ✓ Pronto
-                  </button>
-                </div>
-              </div>
-            )}
+          <div className={styles.stepTitle}>
+            {prompt ? 'Estilo escolhido' : 'Escreva seu prompt'}
           </div>
         </div>
+        {prompt ? (
+          <div className={styles.styleCard}>
+            {prompt.image ? (
+              <img className={styles.styleThumb} src={prompt.image} alt={prompt.title} />
+            ) : (
+              <div className={styles.stylePlaceholder}>📷</div>
+            )}
+            <div className={styles.styleInfo}>
+              <div className={styles.styleName}>
+                {prompt.title}
+                {isEdited && <span className={styles.editedBadge}>editado</span>}
+              </div>
+              {!editingPrompt ? (
+                <div className={styles.promptPreview}>
+                  <span className={styles.promptText}>{customPrompt}</span>
+                  <button
+                    className={styles.editPromptBtn}
+                    onClick={() => setEditingPrompt(true)}
+                    title="Editar prompt"
+                    aria-label="Editar prompt"
+                  >
+                    ✎
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.promptEdit}>
+                  <textarea
+                    ref={textareaRef}
+                    className={styles.promptTextarea}
+                    value={customPrompt}
+                    onChange={e => setCustomPrompt(e.target.value)}
+                    rows={6}
+                    placeholder="Escreva o prompt..."
+                  />
+                  <div className={styles.promptEditActions}>
+                    {isEdited && (
+                      <button className={styles.resetBtn} onClick={resetPrompt}>
+                        ↺ Restaurar original
+                      </button>
+                    )}
+                    <button className={styles.doneBtn} onClick={() => setEditingPrompt(false)}>
+                      ✓ Pronto
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            className={styles.promptTextarea}
+            value={customPrompt}
+            onChange={e => setCustomPrompt(e.target.value)}
+            rows={6}
+            placeholder="Descreva a imagem que você quer gerar. Ex: A professional portrait of a woman in a white studio with soft lighting..."
+            autoFocus
+          />
+        )}
       </div>
 
       <div className={styles.step}>
@@ -390,7 +404,7 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
       <button
         className={styles.generateBtn}
         onClick={handleGenerate}
-        disabled={referenceImages.length === 0}
+        disabled={referenceImages.length === 0 || !customPrompt.trim()}
       >
         ✦ Gerar {count > 1 ? `${count} imagens` : 'imagem'}
       </button>

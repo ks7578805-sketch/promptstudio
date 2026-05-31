@@ -1,0 +1,170 @@
+.page {
+  padding: 24px 20px;
+  max-width: 620px;
+  margin: 0 auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(229,57,53,0.3);
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.section {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding: 14px 18px 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition);
+  font-family: inherit;
+  background: none;
+  border-left: none;
+  border-right: none;
+  width: 100%;
+  text-align: left;
+  color: var(--text);
+}
+
+.row:hover {
+  background: var(--bg2);
+}
+
+.row:first-of-type {
+  border-top: none;
+}
+
+.rowIcon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.rowContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rowDesc {
+  font-size: 11.5px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.rowArrow {
+  color: var(--text3);
+  font-size: 16px;
+}
+
+.rowToggleInfo {
+  flex: 1;
+}
+
+.themeButtonRow {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.themeOption {
+  flex: 1;
+  padding: 12px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.themeOption:hover {
+  border-color: var(--red-mid);
+}
+
+.themeOption.active {
+  border-color: var(--red);
+  background: var(--red-light);
+  color: var(--red);
+}
+
+.themeIcon {
+  font-size: 22px;
+}
+
+.softNote {
+  text-align: center;
+  color: var(--text3);
+  font-size: 11.5px;
+  padding: 12px 0 20px;
+}
+
+.softNote span {
+  color: var(--red);
+  font-weight: 700;
+}

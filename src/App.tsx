@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Sidebar } from './components/Sidebar/Sidebar';
+import { BottomNav, type NavView } from './components/BottomNav/BottomNav';
 import { Header } from './components/Header/Header';
 import { LibraryPage } from './pages/LibraryPage/LibraryPage';
 import { AdminPage } from './pages/AdminPage/AdminPage';
 import { GeneratePage } from './pages/GeneratePage/GeneratePage';
 import { HistoryPage } from './pages/HistoryPage/HistoryPage';
+import { ProfilePage } from './pages/ProfilePage/ProfilePage';
 import { PromptModal } from './components/PromptModal/PromptModal';
 import { DetailModal } from './components/DetailModal/DetailModal';
 import { SectionModal } from './components/SectionModal/SectionModal';
@@ -13,9 +14,7 @@ import { usePrompts } from './hooks/usePrompts';
 import { useFavorites } from './hooks/useFavorites';
 import { useGenerationQueue } from './hooks/useGenerationQueue';
 import { useTheme } from './hooks/useTheme';
-import type { SortOption, PeopleFilter, Prompt, Section, AnyImageModel, Resolution, Provider } from './lib/types';
-
-type View = 'library' | 'admin' | 'generate' | 'history';
+import type { SortOption, PeopleFilter, Prompt, Section } from './lib/types';
 
 export default function App() {
   const {
@@ -29,26 +28,19 @@ export default function App() {
   const { favorites, toggleFavorite } = useFavorites();
   const { toast, showToast } = useToast();
   const queue = useGenerationQueue();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
-  // View atual
-  const [view, setView] = useState<View>('library');
+  const [view, setView] = useState<NavView>('library');
   const [generatingFor, setGeneratingFor] = useState<Prompt | null>(null);
 
-  // Navigation
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState('all');
-
-  // Filters
   const [search, setSearch] = useState('');
   const [peopleFilter, setPeopleFilter] = useState<PeopleFilter>('all');
   const [sortOption, setSortOption] = useState<SortOption>('recent');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  // Stats
   const [copiedToday, setCopiedToday] = useState(0);
 
-  // Modals
   const [promptModalOpen, setPromptModalOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -56,14 +48,6 @@ export default function App() {
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
 
-  // Fechar sidebar no resize
-  useEffect(() => {
-    const fn = () => { if (window.innerWidth > 768) setSidebarOpen(false); };
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-
-  // Notifica quando uma geração termina
   useEffect(() => {
     const justFinished = queue.jobs.find(
       j => (j.status === 'done' || j.status === 'error') && j.completedAt && Date.now() - j.completedAt < 1000
@@ -76,6 +60,13 @@ export default function App() {
       }
     }
   }, [queue.jobs, showToast]);
+
+  function handleNavChange(v: NavView) {
+    if (v === 'generate') {
+      setGeneratingFor(null);
+    }
+    setView(v);
+  }
 
   function openNewPrompt() {
     setEditingPrompt(null);
@@ -95,7 +86,7 @@ export default function App() {
     setDetailModalOpen(true);
   }
 
-  function openGenerate() {
+  function openGenerateFromPrompt() {
     const p = prompts.find(x => x.id === detailPromptId);
     if (!p) return;
     setGeneratingFor(p);
@@ -141,36 +132,11 @@ export default function App() {
     showToast('Seção excluída', 'error');
   }
 
-  function handleGenerate(params: {
-    referenceImages: string[];
-    provider: Provider;
-    model: AnyImageModel;
-    resolution: Resolution;
-    count: number;
-    customPrompt: string;
-    identityBoost: boolean;
-  }) {
-    if (!generatingFor) return;
-    queue.addJob({
-      promptId: generatingFor.id,
-      promptTitle: generatingFor.title,
-      promptText: params.customPrompt,
-      referenceImages: params.referenceImages,
-      provider: params.provider,
-      model: params.model,
-      resolution: params.resolution,
-      count: params.count,
-      identityBoost: params.identityBoost,
-    });
-    showToast(`✦ Gerando ${params.count} ${params.count === 1 ? 'imagem' : 'imagens'}...`, 'success');
-    setGeneratingFor(null);
-    setView('library');
-  }
-
   function getHeaderTitle() {
     if (view === 'admin') return { title: 'Painel', highlight: 'Admin' };
     if (view === 'generate') return { title: 'Gerar', highlight: 'Imagem' };
-    if (view === 'history') return { title: 'Histórico', highlight: '' };
+    if (view === 'history') return { title: '', highlight: 'Histórico' };
+    if (view === 'profile') return { title: '', highlight: 'Perfil' };
     if (activeSectionId === 'all') return { title: 'Todos os', highlight: 'Prompts' };
     const section = sections.find(s => s.id === activeSectionId);
     return { title: section?.name ?? '', highlight: '' };
@@ -181,91 +147,95 @@ export default function App() {
   const detailSection = sections.find(s => s.id === detailPrompt?.sectionId);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar
-        sections={sections}
-        prompts={prompts}
-        activeSectionId={activeSectionId}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onSelectSection={id => { setActiveSectionId(id); setView('library'); setSearch(''); }}
+    <div style={{ minHeight: '100vh', paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))' }}>
+      <Header
+        title={title}
+        titleHighlight={highlight}
+        searchValue={search}
+        onSearchChange={setSearch}
+        onMenuToggle={() => {}}
         onNewPrompt={openNewPrompt}
-        onAdmin={() => setView('admin')}
-        isAdminActive={view === 'admin'}
       />
 
-      <div style={{ marginLeft: 'var(--sidebar-width)', flex: 1 }} className="main-content">
-        <Header
-          title={title}
-          titleHighlight={highlight}
-          searchValue={search}
+      {view === 'library' && (
+        <LibraryPage
+          prompts={prompts}
+          sections={sections}
+          loading={loading}
+          activeSectionId={activeSectionId}
+          onSectionChange={setActiveSectionId}
+          peopleFilter={peopleFilter}
+          onPeopleChange={setPeopleFilter}
+          sortOption={sortOption}
+          onSortChange={setSortOption}
+          showFavoritesOnly={showFavoritesOnly}
+          onFavoritesToggle={() => setShowFavoritesOnly(prev => !prev)}
+          searchQuery={search}
           onSearchChange={setSearch}
-          onMenuToggle={() => setSidebarOpen(prev => !prev)}
+          copiedToday={copiedToday}
+          favorites={favorites}
+          onFavorite={toggleFavorite}
+          onCopy={openDetail}
+          onOpenDetail={openDetail}
           onNewPrompt={openNewPrompt}
-          onHistory={() => setView('history')}
-          historyActiveCount={queue.activeCount}
-          historyTotalCount={queue.jobs.length}
-          theme={theme}
-          onToggleTheme={toggleTheme}
         />
+      )}
 
-        {view === 'library' && (
-          <LibraryPage
-            prompts={prompts}
-            sections={sections}
-            loading={loading}
-            activeSectionId={activeSectionId}
-            onSectionChange={id => { setActiveSectionId(id); setView('library'); }}
-            peopleFilter={peopleFilter}
-            onPeopleChange={setPeopleFilter}
-            sortOption={sortOption}
-            onSortChange={setSortOption}
-            showFavoritesOnly={showFavoritesOnly}
-            onFavoritesToggle={() => setShowFavoritesOnly(prev => !prev)}
-            searchQuery={search}
-            onSearchChange={setSearch}
-            copiedToday={copiedToday}
-            favorites={favorites}
-            onFavorite={toggleFavorite}
-            onCopy={openDetail}
-            onOpenDetail={openDetail}
-            onNewPrompt={openNewPrompt}
-          />
-        )}
+      {view === 'admin' && (
+        <AdminPage
+          prompts={prompts}
+          sections={sections}
+          onReorderPrompts={reorderPrompts}
+          onReorderSections={reorderSections}
+          onEditPrompt={openEditPrompt}
+          onDeletePrompt={handleDeletePrompt}
+          onEditSection={openEditSection}
+          onDeleteSection={handleDeleteSection}
+          onNewSection={openNewSection}
+        />
+      )}
 
-        {view === 'admin' && (
-          <AdminPage
-            prompts={prompts}
-            sections={sections}
-            onReorderPrompts={reorderPrompts}
-            onReorderSections={reorderSections}
-            onEditPrompt={openEditPrompt}
-            onDeletePrompt={handleDeletePrompt}
-            onEditSection={openEditSection}
-            onDeleteSection={handleDeleteSection}
-            onNewSection={openNewSection}
-          />
-        )}
+      {view === 'generate' && (
+        <GeneratePage
+          prompt={generatingFor}
+          onBack={() => { setGeneratingFor(null); setView('library'); }}
+          onGenerate={({ referenceImages, provider, model, resolution, count, customPrompt, identityBoost }) => {
+            queue.addJob({
+              promptId: generatingFor?.id ?? 'free',
+              promptTitle: generatingFor?.title ?? 'Geração livre',
+              promptText: customPrompt,
+              referenceImages,
+              provider,
+              model,
+              resolution,
+              count,
+              identityBoost,
+            });
+            showToast(`✦ Gerando ${count} ${count === 1 ? 'imagem' : 'imagens'}...`, 'success');
+            setGeneratingFor(null);
+            setView('history');
+          }}
+        />
+      )}
 
-        {view === 'generate' && generatingFor && (
-          <GeneratePage
-            prompt={generatingFor}
-            onBack={() => { setGeneratingFor(null); setView('library'); }}
-            onGenerate={handleGenerate}
-          />
-        )}
+      {view === 'history' && (
+        <HistoryPage
+          jobs={queue.jobs}
+          onRemoveJob={queue.removeJob}
+          onClearDone={queue.clearDone}
+          onClearAll={queue.clearAll}
+        />
+      )}
 
-        {view === 'history' && (
-          <HistoryPage
-            jobs={queue.jobs}
-            onRemoveJob={queue.removeJob}
-            onClearDone={queue.clearDone}
-            onClearAll={queue.clearAll}
-          />
-        )}
-      </div>
+      {view === 'profile' && (
+        <ProfilePage
+          totalPrompts={prompts.length}
+          totalGenerated={queue.jobs.length}
+          theme={theme}
+          onThemeChange={setTheme}
+        />
+      )}
 
-      {/* Modais */}
       <PromptModal
         isOpen={promptModalOpen}
         onClose={() => setPromptModalOpen(false)}
@@ -284,7 +254,7 @@ export default function App() {
         onFavorite={() => detailPromptId && toggleFavorite(detailPromptId)}
         onEdit={() => openEditPrompt(detailPromptId!)}
         onCopy={() => handleCopy(detailPromptId!)}
-        onGenerate={openGenerate}
+        onGenerate={openGenerateFromPrompt}
       />
 
       <SectionModal
@@ -293,6 +263,13 @@ export default function App() {
         onSave={handleSaveSection}
         onDelete={handleDeleteSection}
         editingSection={editingSection}
+      />
+
+      <BottomNav
+        active={view}
+        onChange={handleNavChange}
+        historyBadge={queue.jobs.length}
+        hasActiveGeneration={queue.activeCount > 0}
       />
 
       <Toast {...toast} />
