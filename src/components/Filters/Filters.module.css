@@ -12,6 +12,21 @@
   flex-wrap: wrap;
 }
 
+.sectionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.sectionRow::-webkit-scrollbar {
+  display: none;
+}
+
 .label {
   font-size: 11px;
   font-weight: 700;
@@ -23,7 +38,7 @@
 }
 
 .pill {
-  padding: 6px 14px;
+  padding: 7px 14px;
   border-radius: 99px;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -33,6 +48,12 @@
   cursor: pointer;
   transition: all var(--transition);
   white-space: nowrap;
+  flex-shrink: 0;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  scroll-snap-align: start;
 }
 
 .pill:hover {
@@ -45,6 +66,16 @@
   background: var(--red);
   color: white;
   border-color: var(--red);
+}
+
+.pillSparkle {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.favoritesPill {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .sortRow {
@@ -72,8 +103,14 @@
   border-color: var(--red);
 }
 
-@media (max-width: 600px) {
-  .row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+@media (max-width: 768px) {
+  .row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
   .row::-webkit-scrollbar { display: none; }
   .sortRow { margin-left: 0; }
+  .favoritesPill { margin-left: 0; }
 }

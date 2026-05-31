@@ -1,0 +1,291 @@
+.page {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.title span {
+  color: var(--red);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.actionBtn:hover {
+  border-color: var(--red-mid);
+  color: var(--red);
+}
+
+.actionBtn.danger:hover {
+  background: var(--red-light);
+}
+
+.jobList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.job {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  animation: fadeUp 0.3s ease both;
+}
+
+.jobHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.jobTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jobStatus {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.jobStatus.pending,
+.jobStatus.generating {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.jobStatus.done {
+  background: #DCFCE7;
+  color: #15803D;
+}
+
+.jobStatus.error {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+.jobMeta {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.jobError {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #B91C1C;
+  margin-bottom: 10px;
+}
+
+.imagesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.imageCard {
+  position: relative;
+  aspect-ratio: 3/4;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+
+.imageCard:hover {
+  transform: translateY(-2px);
+}
+
+.imageCard img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imageCard.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imageCard.loading::after {
+  content: '';
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--bg3);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.downloadOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.imageCard:hover .downloadOverlay {
+  opacity: 1;
+}
+
+.jobActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.smallBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.smallBtn:hover {
+  border-color: var(--red-mid);
+  color: var(--red);
+}
+
+.smallBtn.primary {
+  background: var(--red);
+  color: white;
+  border-color: var(--red);
+}
+
+.smallBtn.primary:hover {
+  background: var(--red-dark);
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  background: var(--bg2);
+}
+
+.emptyIcon {
+  font-size: 42px;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.emptyText {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text2);
+}
+
+.emptySub {
+  font-size: 12.5px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+.elapsed {
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.viewOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.imageCard:hover .viewOverlay {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .page { padding: 14px; }
+  .imagesGrid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}

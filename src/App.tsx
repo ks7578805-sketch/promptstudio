@@ -3,13 +3,19 @@ import { Sidebar } from './components/Sidebar/Sidebar';
 import { Header } from './components/Header/Header';
 import { LibraryPage } from './pages/LibraryPage/LibraryPage';
 import { AdminPage } from './pages/AdminPage/AdminPage';
+import { GeneratePage } from './pages/GeneratePage/GeneratePage';
+import { HistoryPage } from './pages/HistoryPage/HistoryPage';
 import { PromptModal } from './components/PromptModal/PromptModal';
 import { DetailModal } from './components/DetailModal/DetailModal';
 import { SectionModal } from './components/SectionModal/SectionModal';
 import { Toast, useToast } from './components/Toast/Toast';
 import { usePrompts } from './hooks/usePrompts';
 import { useFavorites } from './hooks/useFavorites';
-import type { SortOption, PeopleFilter, Prompt, Section } from './lib/types';
+import { useGenerationQueue } from './hooks/useGenerationQueue';
+import { useTheme } from './hooks/useTheme';
+import type { SortOption, PeopleFilter, Prompt, Section, AnyImageModel, Resolution, Provider } from './lib/types';
+
+type View = 'library' | 'admin' | 'generate' | 'history';
 
 export default function App() {
   const {
@@ -22,11 +28,16 @@ export default function App() {
 
   const { favorites, toggleFavorite } = useFavorites();
   const { toast, showToast } = useToast();
+  const queue = useGenerationQueue();
+  const { theme, toggleTheme } = useTheme();
+
+  // View atual
+  const [view, setView] = useState<View>('library');
+  const [generatingFor, setGeneratingFor] = useState<Prompt | null>(null);
 
   // Navigation
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState('all');
-  const [isAdminActive, setIsAdminActive] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -52,16 +63,19 @@ export default function App() {
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  // Paste de imagem global (quando modal de prompt está aberto)
+  // Notifica quando uma geração termina
   useEffect(() => {
-    if (!promptModalOpen) return;
-    const handlePaste = (e: ClipboardEvent) => {
-      const item = [...(e.clipboardData?.items ?? [])].find(i => i.type.startsWith('image/'));
-      if (item) e.preventDefault(); // PromptModal vai lidar internamente
-    };
-    document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
-  }, [promptModalOpen]);
+    const justFinished = queue.jobs.find(
+      j => (j.status === 'done' || j.status === 'error') && j.completedAt && Date.now() - j.completedAt < 1000
+    );
+    if (justFinished) {
+      if (justFinished.status === 'done') {
+        showToast(`✓ "${justFinished.promptTitle}" pronto!`, 'success');
+      } else {
+        showToast(`✕ Erro: ${justFinished.error}`, 'error');
+      }
+    }
+  }, [queue.jobs, showToast]);
 
   function openNewPrompt() {
     setEditingPrompt(null);
@@ -79,6 +93,14 @@ export default function App() {
   function openDetail(id: string) {
     setDetailPromptId(id);
     setDetailModalOpen(true);
+  }
+
+  function openGenerate() {
+    const p = prompts.find(x => x.id === detailPromptId);
+    if (!p) return;
+    setGeneratingFor(p);
+    setDetailModalOpen(false);
+    setView('generate');
   }
 
   async function handleSavePrompt(prompt: Prompt) {
@@ -119,8 +141,36 @@ export default function App() {
     showToast('Seção excluída', 'error');
   }
 
+  function handleGenerate(params: {
+    referenceImages: string[];
+    provider: Provider;
+    model: AnyImageModel;
+    resolution: Resolution;
+    count: number;
+    customPrompt: string;
+    identityBoost: boolean;
+  }) {
+    if (!generatingFor) return;
+    queue.addJob({
+      promptId: generatingFor.id,
+      promptTitle: generatingFor.title,
+      promptText: params.customPrompt,
+      referenceImages: params.referenceImages,
+      provider: params.provider,
+      model: params.model,
+      resolution: params.resolution,
+      count: params.count,
+      identityBoost: params.identityBoost,
+    });
+    showToast(`✦ Gerando ${params.count} ${params.count === 1 ? 'imagem' : 'imagens'}...`, 'success');
+    setGeneratingFor(null);
+    setView('library');
+  }
+
   function getHeaderTitle() {
-    if (isAdminActive) return { title: 'Painel', highlight: 'Admin' };
+    if (view === 'admin') return { title: 'Painel', highlight: 'Admin' };
+    if (view === 'generate') return { title: 'Gerar', highlight: 'Imagem' };
+    if (view === 'history') return { title: 'Histórico', highlight: '' };
     if (activeSectionId === 'all') return { title: 'Todos os', highlight: 'Prompts' };
     const section = sections.find(s => s.id === activeSectionId);
     return { title: section?.name ?? '', highlight: '' };
@@ -138,10 +188,10 @@ export default function App() {
         activeSectionId={activeSectionId}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onSelectSection={id => { setActiveSectionId(id); setIsAdminActive(false); setSearch(''); }}
+        onSelectSection={id => { setActiveSectionId(id); setView('library'); setSearch(''); }}
         onNewPrompt={openNewPrompt}
-        onAdmin={() => setIsAdminActive(true)}
-        isAdminActive={isAdminActive}
+        onAdmin={() => setView('admin')}
+        isAdminActive={view === 'admin'}
       />
 
       <div style={{ marginLeft: 'var(--sidebar-width)', flex: 1 }} className="main-content">
@@ -152,15 +202,20 @@ export default function App() {
           onSearchChange={setSearch}
           onMenuToggle={() => setSidebarOpen(prev => !prev)}
           onNewPrompt={openNewPrompt}
+          onHistory={() => setView('history')}
+          historyActiveCount={queue.activeCount}
+          historyTotalCount={queue.jobs.length}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
-        {!isAdminActive && (
+        {view === 'library' && (
           <LibraryPage
             prompts={prompts}
             sections={sections}
             loading={loading}
             activeSectionId={activeSectionId}
-            onSectionChange={id => { setActiveSectionId(id); setIsAdminActive(false); }}
+            onSectionChange={id => { setActiveSectionId(id); setView('library'); }}
             peopleFilter={peopleFilter}
             onPeopleChange={setPeopleFilter}
             sortOption={sortOption}
@@ -168,17 +223,17 @@ export default function App() {
             showFavoritesOnly={showFavoritesOnly}
             onFavoritesToggle={() => setShowFavoritesOnly(prev => !prev)}
             searchQuery={search}
+            onSearchChange={setSearch}
             copiedToday={copiedToday}
             favorites={favorites}
             onFavorite={toggleFavorite}
-            onCopy={handleCopy}
-            onEdit={openEditPrompt}
+            onCopy={openDetail}
             onOpenDetail={openDetail}
             onNewPrompt={openNewPrompt}
           />
         )}
 
-        {isAdminActive && (
+        {view === 'admin' && (
           <AdminPage
             prompts={prompts}
             sections={sections}
@@ -189,6 +244,23 @@ export default function App() {
             onEditSection={openEditSection}
             onDeleteSection={handleDeleteSection}
             onNewSection={openNewSection}
+          />
+        )}
+
+        {view === 'generate' && generatingFor && (
+          <GeneratePage
+            prompt={generatingFor}
+            onBack={() => { setGeneratingFor(null); setView('library'); }}
+            onGenerate={handleGenerate}
+          />
+        )}
+
+        {view === 'history' && (
+          <HistoryPage
+            jobs={queue.jobs}
+            onRemoveJob={queue.removeJob}
+            onClearDone={queue.clearDone}
+            onClearAll={queue.clearAll}
           />
         )}
       </div>
@@ -208,8 +280,11 @@ export default function App() {
         onClose={() => setDetailModalOpen(false)}
         prompt={detailPrompt}
         section={detailSection}
+        isFavorite={detailPromptId ? favorites.has(detailPromptId) : false}
+        onFavorite={() => detailPromptId && toggleFavorite(detailPromptId)}
         onEdit={() => openEditPrompt(detailPromptId!)}
         onCopy={() => handleCopy(detailPromptId!)}
+        onGenerate={openGenerate}
       />
 
       <SectionModal

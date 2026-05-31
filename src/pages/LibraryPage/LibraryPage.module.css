@@ -57,7 +57,13 @@
   margin-top: 4px;
 }
 
-@media (max-width: 600px) {
-  .page { padding: 16px; }
-  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+@media (max-width: 768px) {
+  .page { padding: 14px 12px 24px; }
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .sectionHeader { margin-bottom: 14px; }
+  .sectionTitle { font-size: 18px; }
+  .sectionSub { font-size: 12px; }
 }

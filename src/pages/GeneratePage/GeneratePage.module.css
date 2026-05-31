@@ -1,0 +1,692 @@
+.page {
+  padding: 20px;
+  max-width: 680px;
+  margin: 0 auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.backBtn:hover {
+  background: var(--bg2);
+  color: var(--red);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title span {
+  color: var(--red);
+  font-size: 24px;
+}
+
+.step {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.stepNumber {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--red);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stepTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.styleCard {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: var(--bg2);
+  border-radius: 12px;
+  align-items: center;
+}
+
+.styleThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.stylePlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.styleInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.styleName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.stylePreview {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.uploadArea {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--bg2);
+}
+
+.uploadArea:hover,
+.uploadArea.dragOver {
+  border-color: var(--red);
+  background: var(--red-light);
+}
+
+.uploadIcon {
+  font-size: 36px;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+
+.uploadText {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.uploadSub {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.uploadedPreview {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+}
+
+.changeBtn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text2);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.changeBtn:hover {
+  border-color: var(--red-mid);
+  color: var(--red);
+}
+
+.modelRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.modelCard {
+  padding: 12px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.modelCard:hover {
+  border-color: var(--red-mid);
+  background: var(--red-light);
+}
+
+.modelCard.active {
+  border-color: var(--red);
+  background: var(--red-light);
+}
+
+.modelName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.modelSpeed {
+  font-size: 10px;
+  color: var(--text3);
+}
+
+.modelCard.active .modelName {
+  color: var(--red);
+}
+
+.resolutionRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.resolutionCard {
+  padding: 14px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+  position: relative;
+  font-family: inherit;
+}
+
+.resolutionCard:hover {
+  border-color: var(--red-mid);
+  background: var(--red-light);
+}
+
+.resolutionCard.active {
+  border-color: var(--red);
+  background: var(--red-light);
+  color: var(--red);
+}
+
+.resolutionLabel {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.resolutionTag {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: var(--red);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+.generateBtn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  box-shadow: 0 4px 14px rgba(229,57,53,0.3);
+}
+
+.generateBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(229,57,53,0.4);
+}
+
+.generateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editedBadge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--red);
+  background: var(--red-light);
+  padding: 2px 6px;
+  border-radius: 99px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+
+.promptPreview {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.promptText {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.editPromptBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: var(--red);
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  font-family: inherit;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.35);
+}
+
+.editPromptBtn:hover {
+  background: var(--red-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229,57,53,0.5);
+}
+
+.promptEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promptTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.promptTextarea:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(229,57,53,0.08);
+}
+
+.promptEditActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.resetBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.resetBtn:hover {
+  border-color: var(--red-mid);
+  color: var(--red);
+}
+
+.doneBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--red);
+  color: white;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition);
+  font-family: inherit;
+}
+
+.doneBtn:hover {
+  background: var(--red-dark);
+}
+
+.providerRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.providerCard {
+  padding: 14px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition);
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.providerCard:hover {
+  border-color: var(--red-mid);
+  background: var(--red-light);
+}
+
+.providerCard.active {
+  border-color: var(--red);
+  background: var(--red-light);
+}
+
+.providerIcon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.providerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.providerName {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.providerCard.active .providerName {
+  color: var(--red);
+}
+
+.providerDesc {
+  font-size: 10.5px;
+  color: var(--text3);
+  line-height: 1.3;
+}
+
+.modelBadge {
+  display: inline-block;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 99px;
+  margin-left: 4px;
+  vertical-align: middle;
+  background: var(--red);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.imagesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.imageItem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.imageItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imageRemoveBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  line-height: 1;
+  transition: background var(--transition);
+  padding: 0;
+}
+
+.imageRemoveBtn:hover {
+  background: var(--red);
+}
+
+.addMoreCard {
+  aspect-ratio: 1;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+  color: var(--text2);
+  font-family: inherit;
+}
+
+.addMoreCard:hover {
+  border-color: var(--red);
+  background: var(--red-light);
+  color: var(--red);
+}
+
+.addMoreIcon {
+  font-size: 22px;
+}
+
+.addMoreText {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.imagesCount {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.toggleInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.toggleTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.toggleDesc {
+  font-size: 11.5px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  inset: 0;
+  background: var(--text3);
+  border-radius: 99px;
+  transition: background var(--transition);
+  cursor: pointer;
+}
+
+.toggleSlider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  top: 3px;
+  left: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.toggle input:checked + .toggleSlider {
+  background: var(--red);
+}
+
+.toggle input:checked + .toggleSlider::before {
+  transform: translateX(18px);
+}
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .title { font-size: 18px; }
+  .step { padding: 14px; }
+  .stepTitle { font-size: 13px; }
+  .modelRow { grid-template-columns: 1fr; }
+  .resolutionRow { gap: 6px; }
+  .resolutionLabel { font-size: 14px; }
+  .styleCard { padding: 8px; }
+  .styleThumb, .stylePlaceholder {
+    width: 56px;
+    height: 56px;
+  }
+  .styleName { font-size: 13px; }
+  .promptText { font-size: 11.5px; }
+  .uploadArea { padding: 24px 16px; }
+  .uploadText { font-size: 13px; }
+  .uploadSub { font-size: 11px; }
+  .generateBtn { padding: 14px; font-size: 14px; }
+  .providerRow { grid-template-columns: 1fr; }
+}

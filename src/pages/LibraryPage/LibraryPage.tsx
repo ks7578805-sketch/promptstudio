@@ -3,6 +3,7 @@ import { StatsBar } from '../../components/StatsBar/StatsBar';
 import { Filters } from '../../components/Filters/Filters';
 import { PromptCard } from '../../components/PromptCard/PromptCard';
 import { SkeletonGrid } from '../../components/Skeleton/Skeleton';
+import { MobileSearch } from '../../components/MobileSearch/MobileSearch';
 import styles from './LibraryPage.module.css';
 import type { Prompt, Section, SortOption, PeopleFilter } from '../../lib/types';
 
@@ -19,11 +20,11 @@ interface LibraryPageProps {
   showFavoritesOnly: boolean;
   onFavoritesToggle: () => void;
   searchQuery: string;
+  onSearchChange: (v: string) => void;
   copiedToday: number;
   favorites: Set<string>;
   onFavorite: (id: string) => void;
   onCopy: (id: string) => void;
-  onEdit: (id: string) => void;
   onOpenDetail: (id: string) => void;
   onNewPrompt: () => void;
 }
@@ -41,11 +42,11 @@ export function LibraryPage({
   showFavoritesOnly,
   onFavoritesToggle,
   searchQuery,
+  onSearchChange,
   copiedToday,
   favorites,
   onFavorite,
   onCopy,
-  onEdit,
   onOpenDetail,
 }: LibraryPageProps) {
 
@@ -87,6 +88,8 @@ export function LibraryPage({
 
   return (
     <div className={styles.page}>
+      <MobileSearch value={searchQuery} onChange={onSearchChange} />
+
       <StatsBar
         totalPrompts={prompts.length}
         totalSections={sections.length}
@@ -132,7 +135,6 @@ export function LibraryPage({
                 isFavorite={favorites.has(prompt.id)}
                 onFavorite={() => onFavorite(prompt.id)}
                 onCopy={() => onCopy(prompt.id)}
-                onEdit={() => onEdit(prompt.id)}
                 onClick={() => onOpenDetail(prompt.id)}
                 animationDelay={i * 40}
               />

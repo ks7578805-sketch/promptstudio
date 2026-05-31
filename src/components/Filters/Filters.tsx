@@ -26,13 +26,14 @@ export function Filters({
 }: FiltersProps) {
   return (
     <div className={styles.wrap}>
-      {/* Filtro por seção */}
-      <div className={styles.row}>
+      {/* Pills de seções (scrollable horizontal) */}
+      <div className={styles.sectionRow}>
         <button
-          className={`${styles.pill} ${activeSectionId === 'all' ? styles.active : ''}`}
-          onClick={() => onSectionChange('all')}
+          className={`${styles.pill} ${activeSectionId === 'all' && !showFavoritesOnly ? styles.active : ''}`}
+          onClick={() => { onSectionChange('all'); if (showFavoritesOnly) onFavoritesToggle(); }}
         >
-          Todos
+          <span className={styles.pillSparkle}>✦</span>
+          Tudo
         </button>
         {sections.map(s => (
           <button
@@ -44,9 +45,8 @@ export function Filters({
           </button>
         ))}
         <button
-          className={`${styles.pill} ${showFavoritesOnly ? styles.active : ''}`}
+          className={`${styles.pill} ${styles.favoritesPill} ${showFavoritesOnly ? styles.active : ''}`}
           onClick={onFavoritesToggle}
-          style={{ marginLeft: 'auto' }}
         >
           ❤️ Favoritos
         </button>

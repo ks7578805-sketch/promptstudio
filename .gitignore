@@ -29,3 +29,4 @@ dist-ssr
 
 # Firebase Admin service account (gerada em Firebase Console → Contas de serviço)
 scripts/serviceAccount.json
+.vercel
