@@ -97,43 +97,49 @@
   font-weight: 300;
 }
 
-/* Botão Copiar flutuante */
 .copyOverlay {
   position: absolute;
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--red);
-  border: none;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0,0,0,0.06);
   border-radius: 99px;
-  padding: 7px 18px;
+  padding: 7px 16px;
   font-size: 12px;
   font-weight: 700;
-  color: white;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 5px;
   z-index: 2;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(229,57,53,0.45);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   transition: all var(--transition);
   white-space: nowrap;
   font-family: inherit;
 }
 
 [data-theme="dark"] .copyOverlay {
-  box-shadow: 0 4px 14px rgba(255,82,82,0.5);
+  background: rgba(20,20,22,0.92);
+  color: var(--text);
+  border-color: var(--border);
 }
 
 .copyOverlay:hover {
-  background: var(--red-dark);
+  background: white;
   transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 6px 18px rgba(229,57,53,0.6);
+}
+
+[data-theme="dark"] .copyOverlay:hover {
+  background: var(--card-bg);
 }
 
 .copyOverlay.copied {
   background: #16A34A;
-  box-shadow: 0 4px 14px rgba(22,163,74,0.45);
+  color: white;
+  border-color: #16A34A;
 }
 
 /* Body */
@@ -183,19 +189,35 @@
 }
 
 @media (max-width: 768px) {
-  .card { border-radius: 14px; }
-  .body { padding: 10px 12px 12px; }
-  .title { font-size: 13px; }
-  .subtitle { font-size: 10.5px; }
+  .card {
+    border-radius: 14px;
+  }
+  .body {
+    padding: 10px 12px 12px;
+    gap: 3px;
+  }
+  .title {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+  .subtitle {
+    font-size: 10.5px;
+  }
   .copyOverlay {
     padding: 6px 14px;
     font-size: 11.5px;
-    bottom: 10px;
+    bottom: 8px;
   }
   .favoriteBtn {
     top: 8px;
     right: 8px;
     width: 32px;
     height: 32px;
+  }
+  .copiesBadge {
+    top: 8px;
+    left: 8px;
+    font-size: 9px;
+    padding: 2px 6px;
   }
 }

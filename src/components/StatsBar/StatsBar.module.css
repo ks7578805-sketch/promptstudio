@@ -6,7 +6,7 @@
 }
 
 .card {
-  background: var(--bg);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
@@ -35,7 +35,22 @@
   line-height: 1;
 }
 
-@media (max-width: 600px) {
-  .bar { grid-template-columns: 1fr; gap: 10px; }
-  .value { font-size: 26px; }
+@media (max-width: 768px) {
+  .bar {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .card {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+  .label {
+    font-size: 9px;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .value {
+    font-size: 20px;
+  }
 }

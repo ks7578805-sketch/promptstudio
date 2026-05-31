@@ -104,13 +104,29 @@
 }
 
 @media (max-width: 768px) {
+  .wrap {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
   .row {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 4px;
     scrollbar-width: none;
+    gap: 6px;
   }
   .row::-webkit-scrollbar { display: none; }
-  .sortRow { margin-left: 0; }
-  .favoritesPill { margin-left: 0; }
+  .sortRow {
+    margin-left: 8px;
+  }
+  .favoritesPill {
+    margin-left: 4px;
+  }
+  .pill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .label {
+    font-size: 10px;
+  }
 }
