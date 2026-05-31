@@ -1,0 +1,21 @@
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--text);
+  color: white;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 999;
+  box-shadow: var(--shadow-md);
+  animation: fadeUp 0.2s ease;
+  max-width: 320px;
+}
+
+.toast.success { background: #16A34A; }
+.toast.error { background: var(--red); }

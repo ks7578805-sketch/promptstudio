@@ -1,0 +1,41 @@
+.bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.card:hover {
+  border-color: var(--red-mid);
+  box-shadow: var(--shadow-red);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--red);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .bar { grid-template-columns: 1fr; gap: 10px; }
+  .value { font-size: 26px; }
+}
