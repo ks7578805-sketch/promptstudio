@@ -3,16 +3,9 @@ import styles from './ProfilePage.module.css';
 interface ProfilePageProps {
   totalPrompts: number;
   totalGenerated: number;
-  theme: 'light' | 'dark';
-  onThemeChange: (t: 'light' | 'dark') => void;
 }
 
-export function ProfilePage({
-  totalPrompts,
-  totalGenerated,
-  theme,
-  onThemeChange,
-}: ProfilePageProps) {
+export function ProfilePage({ totalPrompts, totalGenerated }: ProfilePageProps) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -38,26 +31,6 @@ export function ProfilePage({
             <div className={styles.rowTitle}>Imagens geradas</div>
             <div className={styles.rowDesc}>{totalGenerated} {totalGenerated === 1 ? 'geração' : 'gerações'} no histórico</div>
           </div>
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Aparência</div>
-        <div className={styles.themeButtonRow}>
-          <button
-            className={`${styles.themeOption} ${theme === 'light' ? styles.active : ''}`}
-            onClick={() => onThemeChange('light')}
-          >
-            <span className={styles.themeIcon}>☀</span>
-            Claro
-          </button>
-          <button
-            className={`${styles.themeOption} ${theme === 'dark' ? styles.active : ''}`}
-            onClick={() => onThemeChange('dark')}
-          >
-            <span className={styles.themeIcon}>🌙</span>
-            Escuro
-          </button>
         </div>
       </div>
 

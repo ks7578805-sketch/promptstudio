@@ -7,9 +7,11 @@ interface BottomNavProps {
   onChange: (v: NavView) => void;
   historyBadge?: number;
   hasActiveGeneration?: boolean;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
-export function BottomNav({ active, onChange, historyBadge = 0, hasActiveGeneration = false }: BottomNavProps) {
+export function BottomNav({ active, onChange, historyBadge = 0, hasActiveGeneration = false, theme, onToggleTheme }: BottomNavProps) {
   return (
     <nav className={styles.nav}>
       <button
@@ -50,6 +52,17 @@ export function BottomNav({ active, onChange, historyBadge = 0, hasActiveGenerat
         <span className={styles.icon}>⚙</span>
         <span className={styles.label}>Admin</span>
       </button>
+
+      {onToggleTheme && (
+        <button
+          className={styles.item}
+          onClick={onToggleTheme}
+          aria-label={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+        >
+          <span className={styles.icon}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span className={styles.label}>{theme === 'dark' ? 'Claro' : 'Escuro'}</span>
+        </button>
+      )}
 
       <button
         className={`${styles.item} ${active === 'profile' ? styles.active : ''}`}

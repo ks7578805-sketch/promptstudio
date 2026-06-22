@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { storage } from './lib/firebase';
 import { BottomNav, type NavView } from './components/BottomNav/BottomNav';
 import { Header } from './components/Header/Header';
 import { LibraryPage } from './pages/LibraryPage/LibraryPage';
@@ -18,11 +20,12 @@ import type { SortOption, PeopleFilter, Prompt, Section } from './lib/types';
 
 export default function App() {
   const {
-    sections, prompts, loading,
+    sections, prompts, loading, error,
     savePrompt, deletePrompt,
     saveSection, deleteSection,
     reorderPrompts, reorderSections,
     incrementCopies,
+    reload,
   } = usePrompts();
 
   const { favorites, toggleFavorite } = useFavorites();
@@ -95,8 +98,25 @@ export default function App() {
   }
 
   async function handleSavePrompt(prompt: Prompt) {
-    await savePrompt(prompt);
+    const hasNewImage = !!prompt.image?.startsWith('data:');
+
+    // Salva o texto primeiro (sem base64) — com offline persistence isso é imediato
+    await savePrompt({ ...prompt, image: hasNewImage ? '' : (prompt.image ?? '') });
     showToast('Prompt salvo!', 'success');
+
+    // Upload da foto em background — não bloqueia o salvamento do texto
+    if (hasNewImage) {
+      void (async () => {
+        try {
+          const storageRef = ref(storage, `prompts/${prompt.id}`);
+          await uploadString(storageRef, prompt.image!, 'data_url');
+          const imageUrl = await getDownloadURL(storageRef);
+          await savePrompt({ ...prompt, image: imageUrl });
+        } catch {
+          // silencioso — prompt já foi salvo sem a foto
+        }
+      })();
+    }
   }
 
   async function handleDeletePrompt(id: string) {
@@ -155,6 +175,8 @@ export default function App() {
         onSearchChange={setSearch}
         onMenuToggle={() => {}}
         onNewPrompt={openNewPrompt}
+        theme={theme}
+        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
 
       {view === 'library' && (
@@ -162,6 +184,8 @@ export default function App() {
           prompts={prompts}
           sections={sections}
           loading={loading}
+          error={error}
+          onReload={reload}
           activeSectionId={activeSectionId}
           onSectionChange={setActiveSectionId}
           peopleFilter={peopleFilter}
@@ -178,6 +202,8 @@ export default function App() {
           onCopy={openDetail}
           onOpenDetail={openDetail}
           onNewPrompt={openNewPrompt}
+          theme={theme}
+          onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         />
       )}
 
@@ -231,8 +257,6 @@ export default function App() {
         <ProfilePage
           totalPrompts={prompts.length}
           totalGenerated={queue.jobs.length}
-          theme={theme}
-          onThemeChange={setTheme}
         />
       )}
 

@@ -21,6 +21,8 @@ export function Header({
   searchValue,
   onSearchChange,
   onNewPrompt,
+  theme,
+  onToggleTheme,
 }: HeaderProps) {
   return (
     <header className={styles.header}>
@@ -30,6 +32,15 @@ export function Header({
 
       <div className={styles.title}>
         {title} {titleHighlight && <span>{titleHighlight}</span>}
+        {onToggleTheme && (
+          <button
+            className={styles.themeBtn}
+            onClick={onToggleTheme}
+            aria-label="Alternar tema"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        )}
       </div>
 
       <div className={styles.search}>

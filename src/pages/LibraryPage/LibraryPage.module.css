@@ -57,6 +57,73 @@
   margin-top: 4px;
 }
 
+.beforeGrid {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.themeToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.themeToggle:hover {
+  background: var(--bg3);
+  border-color: var(--text3);
+}
+
+.errorState {
+  text-align: center;
+  padding: 60px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg2);
+}
+
+.errorIcon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.errorText {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 20px;
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+.retryBtn {
+  padding: 10px 24px;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.retryBtn:hover {
+  background: var(--red-dark);
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 12px;
@@ -67,11 +134,16 @@
   }
   .sectionHeader {
     margin-bottom: 12px;
+    align-items: center;
   }
   .sectionTitle {
     font-size: 16px;
   }
   .sectionSub {
     font-size: 11.5px;
+  }
+  .themeToggle {
+    padding: 7px 12px;
+    font-size: 12px;
   }
 }

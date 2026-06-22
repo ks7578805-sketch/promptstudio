@@ -66,7 +66,7 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
   const [provider, setProvider] = useState<Provider>('google');
   const [geminiModel, setGeminiModel] = useState<GeminiModel>('gemini-3.1-flash-image');
   const [openaiModel, setOpenaiModel] = useState<OpenAIModel>('gpt-image-1.5');
-  const [resolution, setResolution] = useState<Resolution>('2K');
+  const [resolution, setResolution] = useState<Resolution>('1K');
   const [count, setCount] = useState(1);
   const [dragOver, setDragOver] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState(!prompt);
@@ -102,7 +102,7 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
   }
 
   function handleGenerate() {
-    if (referenceImages.length === 0 || !customPrompt.trim()) return;
+    if (!customPrompt.trim()) return;
     const selectedModel: AnyImageModel = provider === 'google' ? geminiModel : openaiModel;
     onGenerate({
       referenceImages,
@@ -204,7 +204,7 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
       <div className={styles.step}>
         <div className={styles.stepHeader}>
           <div className={styles.stepNumber}>2</div>
-          <div className={styles.stepTitle}>Envie suas fotos de referência</div>
+          <div className={styles.stepTitle}>Fotos de referência <span style={{fontWeight:400,fontSize:'0.85em',color:'var(--text3)'}}>(opcional)</span></div>
         </div>
 
         <input
@@ -404,7 +404,7 @@ export function GeneratePage({ prompt, onBack, onGenerate }: GeneratePageProps) 
       <button
         className={styles.generateBtn}
         onClick={handleGenerate}
-        disabled={referenceImages.length === 0 || !customPrompt.trim()}
+        disabled={!customPrompt.trim()}
       >
         ✦ Gerar {count > 1 ? `${count} imagens` : 'imagem'}
       </button>

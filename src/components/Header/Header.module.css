@@ -15,7 +15,24 @@
 .logoCenter {
   display: flex;
   align-items: center;
+  gap: 8px;
   flex: 0 0 auto;
+}
+
+.themeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: background var(--transition);
+  margin-left: 4px;
+}
+
+.themeBtn:hover {
+  background: var(--bg3);
 }
 
 .title {
@@ -24,6 +41,9 @@
   color: var(--text);
   letter-spacing: -0.03em;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .title span {

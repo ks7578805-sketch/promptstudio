@@ -27,10 +27,18 @@ export function usePrompts() {
   async function loadData() {
     try {
       setLoading(true);
+      setError(null);
 
-      const [sectionsSnap, promptsSnap] = await Promise.all([
-        getDocs(query(collection(db, 'sections'), orderBy('order', 'asc'))),
-        getDocs(collection(db, 'prompts')),
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Sem conexão — verifique sua internet e tente novamente.')), 10000)
+      );
+
+      const [sectionsSnap, promptsSnap] = await Promise.race([
+        Promise.all([
+          getDocs(query(collection(db, 'sections'), orderBy('order', 'asc'))),
+          getDocs(collection(db, 'prompts')),
+        ]),
+        timeout,
       ]);
 
       const loadedSections = sectionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Section));
@@ -42,7 +50,8 @@ export function usePrompts() {
       setSections(loadedSections);
       setPrompts(loadedPrompts);
     } catch (err) {
-      setError('Erro ao carregar dados.');
+      const msg = err instanceof Error ? err.message : 'Erro ao carregar dados.';
+      setError(msg);
       console.error(err);
     } finally {
       setLoading(false);
@@ -50,14 +59,23 @@ export function usePrompts() {
   }
 
   async function savePrompt(prompt: Prompt) {
-    const { id, ...data } = prompt;
+    const { id, ...rawData } = prompt;
+    // Firebase v11 não aceita undefined — remove campos undefined
+    const data = Object.fromEntries(
+      Object.entries(rawData).filter(([, v]) => v !== undefined)
+    );
+
+    // Com offline persistence habilitado em firebase.ts, este setDoc
+    // resolve imediatamente após gravar no cache local (IndexedDB)
+    // e sincroniza com o servidor em background — nunca trava
     await setDoc(doc(db, 'prompts', id), { ...data, updatedAt: Date.now() });
+
     setPrompts(prev => {
       const exists = prev.findIndex(p => p.id === id);
       if (exists >= 0) {
-        return prev.map(p => p.id === id ? { ...p, ...data, updatedAt: Date.now() } : p);
+        return prev.map(p => p.id === id ? { ...p, ...data, updatedAt: Date.now() } as Prompt : p);
       }
-      return [{ id, ...data, updatedAt: Date.now() }, ...prev];
+      return [{ id, ...data, updatedAt: Date.now() } as Prompt, ...prev];
     });
   }
 

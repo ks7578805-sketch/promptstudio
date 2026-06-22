@@ -26,30 +26,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       quality?: 'low' | 'medium' | 'high';
     };
 
-    if (!model || !promptText || !Array.isArray(referenceImages) || referenceImages.length === 0) {
-      return res.status(400).json({ error: 'Payload inválido: model, promptText e referenceImages são obrigatórios' });
+    if (!model || !promptText) {
+      return res.status(400).json({ error: 'Payload inválido: model e promptText são obrigatórios' });
     }
     if (!size || !quality) {
       return res.status(400).json({ error: 'Payload inválido: size e quality são obrigatórios' });
     }
 
-    const form = new FormData();
-    form.append('model', model);
-    form.append('prompt', promptText);
-    form.append('size', size);
-    form.append('quality', quality);
-    form.append('n', '1');
+    const hasReferenceImages = Array.isArray(referenceImages) && referenceImages.length > 0;
 
-    referenceImages.forEach((img, idx) => {
-      const { buffer, mime } = dataUrlToBuffer(img);
-      form.append('image[]', new Blob([new Uint8Array(buffer)], { type: mime }), `reference_${idx}.jpg`);
-    });
-
-    const apiRes = await fetch('https://api.openai.com/v1/images/edits', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-      body: form,
-    });
+    let apiRes: Response;
+    if (hasReferenceImages) {
+      const form = new FormData();
+      form.append('model', model);
+      form.append('prompt', promptText);
+      form.append('size', size);
+      form.append('quality', quality);
+      form.append('n', '1');
+      referenceImages.forEach((img, idx) => {
+        const { buffer, mime } = dataUrlToBuffer(img);
+        form.append('image[]', new Blob([new Uint8Array(buffer)], { type: mime }), `reference_${idx}.jpg`);
+      });
+      apiRes = await fetch('https://api.openai.com/v1/images/edits', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+        body: form,
+      });
+    } else {
+      apiRes = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model, prompt: promptText, size, quality, n: 1, output_format: 'b64_json' }),
+      });
+    }
 
     if (!apiRes.ok) {
       const errBody = await apiRes.text();

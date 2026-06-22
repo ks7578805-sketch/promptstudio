@@ -11,6 +11,8 @@ interface LibraryPageProps {
   prompts: Prompt[];
   sections: Section[];
   loading: boolean;
+  error: string | null;
+  onReload: () => void;
   activeSectionId: string;
   onSectionChange: (id: string) => void;
   peopleFilter: PeopleFilter;
@@ -27,12 +29,16 @@ interface LibraryPageProps {
   onCopy: (id: string) => void;
   onOpenDetail: (id: string) => void;
   onNewPrompt: () => void;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
 export function LibraryPage({
   prompts,
   sections,
   loading,
+  error,
+  onReload,
   activeSectionId,
   onSectionChange,
   peopleFilter,
@@ -48,6 +54,8 @@ export function LibraryPage({
   onFavorite,
   onCopy,
   onOpenDetail,
+  theme,
+  onToggleTheme,
 }: LibraryPageProps) {
 
   const filtered = useMemo(() => {
@@ -115,7 +123,13 @@ export function LibraryPage({
         onFavoritesToggle={onFavoritesToggle}
       />
 
-      {loading ? (
+      {error ? (
+        <div className={styles.errorState}>
+          <div className={styles.errorIcon}>⚠️</div>
+          <div className={styles.errorText}>{error}</div>
+          <button className={styles.retryBtn} onClick={onReload}>↺ Tentar novamente</button>
+        </div>
+      ) : loading ? (
         <SkeletonGrid count={8} />
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>

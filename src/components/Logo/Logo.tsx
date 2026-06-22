@@ -32,7 +32,7 @@ export function Logo({ compact = false, size = 32 }: LogoProps) {
           <span style={{
             fontSize: '17px',
             fontWeight: 800,
-            color: '#111111',
+            color: 'var(--text)',
             letterSpacing: '-0.03em'
           }}>Prompt</span>
           <span style={{

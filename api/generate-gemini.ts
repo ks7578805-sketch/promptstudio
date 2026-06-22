@@ -27,12 +27,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       referenceImages?: string[];
     };
 
-    if (!model || !promptText || !Array.isArray(referenceImages) || referenceImages.length === 0) {
-      return res.status(400).json({ error: 'Payload inválido: model, promptText e referenceImages são obrigatórios' });
+    if (!model || !promptText) {
+      return res.status(400).json({ error: 'Payload inválido: model e promptText são obrigatórios' });
     }
 
     const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    const imageParts = referenceImages.map(dataUrlToImagePart);
+    const imageParts = Array.isArray(referenceImages) ? referenceImages.map(dataUrlToImagePart) : [];
 
     const response = await ai.models.generateContent({
       model,

@@ -62,6 +62,7 @@ export function PromptModal({ isOpen, onClose, onSave, onDelete, sections, editi
   const [tags, setTags] = useState('');
   const [image, setImage] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [titleTouched, setTitleTouched] = useState(false);
   const [tagsTouched, setTagsTouched] = useState(false);
@@ -70,7 +71,7 @@ export function PromptModal({ isOpen, onClose, onSave, onDelete, sections, editi
   const isEditing = !!editingPrompt;
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) { setSaveError(''); return; }
     if (editingPrompt) {
       setTitle(editingPrompt.title);
       setPrompt(editingPrompt.prompt);
@@ -120,7 +121,11 @@ export function PromptModal({ isOpen, onClose, onSave, onDelete, sections, editi
   }, []);
 
   async function handleSave(addAnother = false) {
-    if (!title.trim() || !prompt.trim() || !sectionId) return;
+    setSaveError('');
+    if (!title.trim()) { setSaveError('O título é obrigatório.'); return; }
+    if (!prompt.trim()) { setSaveError('O prompt principal é obrigatório.'); return; }
+    if (!sectionId) { setSaveError('Selecione uma seção. Se não aparecer nenhuma, aguarde carregar ou verifique a conexão.'); return; }
+
     setSaving(true);
     try {
       const tagList = tags.split(',').map(t => t.trim()).filter(Boolean);
@@ -128,7 +133,7 @@ export function PromptModal({ isOpen, onClose, onSave, onDelete, sections, editi
         id: editingPrompt?.id ?? `p${Date.now()}`,
         title: title.trim(),
         prompt: prompt.trim(),
-        negative: negative.trim(),
+        negative: negative.trim() || undefined,
         sectionId,
         model,
         ratio,
@@ -140,12 +145,15 @@ export function PromptModal({ isOpen, onClose, onSave, onDelete, sections, editi
         createdAt: editingPrompt?.createdAt ?? Date.now(),
       };
       await onSave(obj);
+      setSaveError('');
       if (addAnother) {
         setTitle(''); setPrompt(''); setNegative(''); setTags(''); setImage('');
         setPeopleCount(''); setTitleTouched(false); setTagsTouched(false);
       } else {
         onClose();
       }
+    } catch {
+      setSaveError('Falha ao salvar. Verifique sua conexão e tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -160,6 +168,11 @@ export function PromptModal({ isOpen, onClose, onSave, onDelete, sections, editi
 
   const footer = (
     <>
+      {saveError && (
+        <div style={{ width: '100%', marginBottom: 4, padding: '8px 12px', background: 'var(--red-light)', color: 'var(--red-dark)', borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
+          ⚠️ {saveError}
+        </div>
+      )}
       {isEditing && onDelete && (
         <div style={{ marginRight: 'auto' }}>
           <button className={formStyles.btnDanger} onClick={handleDelete}>✕ Excluir</button>
