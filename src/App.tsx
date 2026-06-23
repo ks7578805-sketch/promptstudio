@@ -26,7 +26,7 @@ export default function App() {
   const uid = user?.uid ?? null;
 
   const {
-    sections, prompts, loading, error,
+    sections, prompts, loading, seeding, error,
     savePrompt, deletePrompt,
     saveSection, deleteSection,
     reorderPrompts, reorderSections,
@@ -183,6 +183,28 @@ export default function App() {
   }
   if (!user || !uid) {
     return <AuthScreen />;
+  }
+
+  // Primeiro login: copiando a biblioteca curada para a conta (pode levar alguns segundos)
+  if (seeding && prompts.length === 0) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 18, padding: 24, textAlign: 'center',
+      }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: '50%',
+          border: '3px solid var(--border)', borderTopColor: 'var(--red)',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>Preparando sua biblioteca</div>
+          <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 6, maxWidth: 280 }}>
+            Estamos copiando os prompts e as fotos para a sua conta. Isso só acontece no primeiro acesso.
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

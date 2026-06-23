@@ -20,6 +20,7 @@ export function usePrompts(uid: string | null) {
   const [sections, setSections] = useState<Section[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const sectionsCol = useCallback(() => collection(db, 'users', uid!, 'sections'), [uid]);
@@ -33,11 +34,17 @@ export function usePrompts(uid: string | null) {
       setLoading(true);
       setError(null);
 
-      // Garante que a biblioteca curada foi copiada para a conta no 1º login
-      await ensureUserSeeded(uid);
+      // Garante que a biblioteca curada foi copiada para a conta no 1º login.
+      // Pode levar alguns segundos (copia todas as imagens) — sinaliza com `seeding`.
+      setSeeding(true);
+      try {
+        await ensureUserSeeded(uid);
+      } finally {
+        setSeeding(false);
+      }
 
       const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Sem conexão — verifique sua internet e tente novamente.')), 10000)
+        setTimeout(() => reject(new Error('Sem conexão — verifique sua internet e tente novamente.')), 30000)
       );
 
       const [sectionsSnap, promptsSnap] = await Promise.race([
@@ -140,6 +147,7 @@ export function usePrompts(uid: string | null) {
     sections,
     prompts,
     loading,
+    seeding,
     error,
     savePrompt,
     deletePrompt,
