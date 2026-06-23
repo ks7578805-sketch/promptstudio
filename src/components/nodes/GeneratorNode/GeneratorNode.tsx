@@ -23,6 +23,37 @@ const MODEL_OPTIONS: { model: AnyImageModel; provider: Provider }[] = [
 
 type GeneratorSpaceNode = Node<GeneratorNodeData, 'generator'>;
 
+// O NÓ INTEIRO muda de forma pela proporção. Geometria fixando o LADO MAIOR
+// (≈460px) e com LARGURA MÍNIMA (300px) pra a barra de controles nunca espremer.
+// Não usa aspect-ratio em div de largura fixa — calcula w/h de verdade.
+const LONG_SIDE = 460;
+const MIN_WIDTH = 300;
+const SQUARE = 380;
+
+function nodeSize(ratio: string): { width: number; height: number } {
+  const [w, h] = ratio.split(':').map(Number);
+  if (!w || !h) return { width: SQUARE, height: SQUARE };
+  if (w === h) return { width: SQUARE, height: SQUARE };
+
+  let width: number;
+  let height: number;
+  if (w > h) {
+    // paisagem: largura = lado maior
+    width = LONG_SIDE;
+    height = LONG_SIDE * (h / w);
+  } else {
+    // retrato: altura = lado maior
+    height = LONG_SIDE;
+    width = LONG_SIDE * (w / h);
+  }
+  // largura mínima → recalcula altura mantendo a proporção
+  if (width < MIN_WIDTH) {
+    width = MIN_WIDTH;
+    height = MIN_WIDTH * (h / w);
+  }
+  return { width: Math.round(width), height: Math.round(height) };
+}
+
 export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps<GeneratorSpaceNode>) {
   const { updateNodeData, getEdges, getNode, addNodes, addEdges, deleteElements } = useReactFlow();
   const allNodes = useNodes();
@@ -113,21 +144,19 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
 
   const generating = status === 'generating';
   const canGenerate = !generating && !!data.prompt.trim();
-  // Card só assume a forma da proporção quando há resultado (ou está gerando).
-  // Vazio = card compacto (altura automática) pra nunca empurrar os controles pra fora.
-  const hasResult = !!preview || generating;
+  // O nó SEMPRE assume a forma da proporção (igual à referência Freepik/Magnific).
+  const { width, height } = nodeSize(data.ratio);
 
-  // Form (prompt + controles) reaproveitado nos dois layouts
+  // Form (prompt + controles), sobreposto na base do preview
   const form = (
     <>
       {error && status === 'error' && <div className={styles.errorMsg}>{error}</div>}
 
       <textarea
         className={`${styles.textarea} nodrag nowheel`}
-        placeholder="Descreva a imagem que quer gerar..."
+        placeholder="Descreva a imagem que você deseja gerar..."
         value={data.prompt}
         onChange={e => updateNodeData(id, { prompt: e.target.value })}
-        rows={2}
       />
 
       <div className={`${styles.controls} nodrag`}>
@@ -191,7 +220,7 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
   return (
     <div
       className={`${styles.node} ${generating ? styles.generating : ''} ${selected ? styles.selected : ''}`}
-      style={hasResult ? { aspectRatio: data.ratio.replace(':', '/') } : undefined}
+      style={{ width, height }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -225,20 +254,15 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
         {generating && <span className={styles.spinner} />}
       </div>
 
-      {hasResult ? (
-        /* Com resultado: card assume a proporção, imagem preenche o corpo, controles sobrepostos na base */
-        <div className={styles.body}>
-          {generating ? (
-            <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
-          ) : (
-            <img src={preview!} alt="resultado" className={styles.previewImg} draggable={false} />
-          )}
-          <div className={styles.baseOverlay}>{form}</div>
-        </div>
-      ) : (
-        /* Vazio: card compacto, prompt + controles em fluxo normal (altura automática) */
-        <div className={styles.compactBody}>{form}</div>
-      )}
+      {/* Corpo: grande área escura de preview (flex:1); prompt + controles sobrepostos na base */}
+      <div className={styles.body}>
+        {generating ? (
+          <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
+        ) : preview ? (
+          <img src={preview} alt="resultado" className={styles.previewImg} draggable={false} />
+        ) : null}
+        <div className={styles.baseOverlay}>{form}</div>
+      </div>
 
       <Handle type="source" position={Position.Right} id="gen-out" className={styles.handle} />
     </div>

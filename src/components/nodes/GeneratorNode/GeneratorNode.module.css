@@ -11,8 +11,7 @@
   --n-accent: #e53935;
 
   position: relative;
-  width: 340px;
-  /* a ALTURA vem do aspect-ratio aplicado inline → o CARD INTEIRO muda de forma */
+  /* width/height vêm inline (nodeSize) → o CARD INTEIRO muda de forma pela proporção */
   background: var(--n-bg);
   border: 1px solid var(--n-border);
   border-radius: 14px;
@@ -83,28 +82,16 @@
   color: var(--n-text);
 }
 
-/* ── Corpo: preview ocupa o principal ───────────────────────── */
+/* ── Corpo: grande área escura de preview (ocupa todo o espaço) ── */
 .body {
   flex: 1;
   min-height: 0;
   position: relative;
-  background: #121214;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #0d0d0f;
   overflow: hidden;
 }
 .previewImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.previewLoading { display: flex; align-items: center; justify-content: center; }
-
-/* ── Corpo compacto (estado vazio): prompt + controles em fluxo normal ── */
-.compactBody {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  background: var(--n-bg);
-}
+.previewLoading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 
 /* ── Overlay na base: prompt + controles ────────────────────── */
 .baseOverlay {
@@ -116,21 +103,27 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: linear-gradient(to top, rgba(18, 18, 20, 0.97) 60%, rgba(18, 18, 20, 0.75) 82%, rgba(18, 18, 20, 0));
+  background: linear-gradient(to top, rgba(13, 13, 15, 0.97) 58%, rgba(13, 13, 15, 0.7) 82%, rgba(13, 13, 15, 0));
 }
 
+/* T3: área de clique do prompt = largura toda + alta o suficiente pra clicar fácil
+   em qualquer ponto. O próprio textarea é o alvo (foco nativo ao clicar). */
 .textarea {
+  display: block;
   width: 100%;
-  padding: 8px 10px;
-  background: rgba(44, 44, 48, 0.92);
+  min-height: 56px;
+  max-height: 160px;
+  padding: 10px 12px;
+  background: rgba(20, 20, 23, 0.82);
   border: 1px solid var(--n-border);
-  border-radius: 9px;
+  border-radius: 10px;
   color: var(--n-text);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.45;
   font-family: inherit;
   resize: none;
   box-sizing: border-box;
+  cursor: text;
 }
 .textarea::placeholder { color: var(--n-text3); }
 .textarea:focus { outline: none; border-color: var(--n-border-strong); }
