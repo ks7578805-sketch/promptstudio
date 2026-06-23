@@ -15,6 +15,13 @@ import styles from './GeneratorNode.module.css';
 const GEMINI_MODELS: GeminiModel[] = ['gemini-2.5-flash-image', 'gemini-3.1-flash-image', 'gemini-3-pro-image'];
 const OPENAI_MODELS: OpenAIModel[] = ['gpt-image-1-mini', 'gpt-image-1.5', 'gpt-image-2'];
 
+// Provedor + modelo fundidos num único dropdown (a funcionalidade dos 2 provedores
+// continua: escolher um modelo define provider + model de uma vez)
+const MODEL_OPTIONS: { model: AnyImageModel; provider: Provider }[] = [
+  ...GEMINI_MODELS.map(m => ({ model: m as AnyImageModel, provider: 'google' as Provider })),
+  ...OPENAI_MODELS.map(m => ({ model: m as AnyImageModel, provider: 'openai' as Provider })),
+];
+
 type GeneratorSpaceNode = Node<GeneratorNodeData, 'generator'>;
 
 export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps<GeneratorSpaceNode>) {
@@ -106,7 +113,6 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
     deleteElements({ nodes: [{ id }] });
   }, [deleteElements, id]);
 
-  const providerModels = data.provider === 'google' ? GEMINI_MODELS : OPENAI_MODELS;
   const generating = status === 'generating';
   const canGenerate = !generating && !!data.prompt.trim();
 
@@ -146,8 +152,8 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
         {generating && <span className={styles.spinner} />}
       </div>
 
-      {/* Área de preview / output */}
-      <div className={styles.preview}>
+      {/* Área de preview / output — a forma segue a proporção escolhida */}
+      <div className={styles.preview} style={{ aspectRatio: data.ratio.replace(':', '/') }}>
         {generating ? (
           <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
         ) : preview ? (
@@ -171,66 +177,61 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
 
       {error && status === 'error' && <div className={styles.errorMsg}>{error}</div>}
 
-      {/* Barra de controles inferior */}
+      {/* Barra de controles — uma única linha horizontal */}
       <div className={`${styles.controls} nodrag`}>
-        <div className={styles.segmented}>
-          {(['google', 'openai'] as Provider[]).map(p => (
-            <button
-              key={p}
-              className={`${styles.segBtn} ${data.provider === p ? styles.segActive : ''}`}
-              onClick={() => {
-                const firstModel = p === 'google' ? GEMINI_MODELS[0] : OPENAI_MODELS[0];
-                updateNodeData(id, { provider: p, model: firstModel });
-              }}
-            >
-              {PROVIDER_INFO[p].name}
-            </button>
-          ))}
+        {/* Quantidade */}
+        <div className={styles.stepper}>
+          <button
+            className={styles.stepBtn}
+            onClick={() => updateNodeData(id, { count: Math.max(1, data.count - 1) })}
+            disabled={data.count <= 1}
+            title="Menos"
+          >−</button>
+          <span className={styles.stepValue}>{data.count}</span>
+          <button
+            className={styles.stepBtn}
+            onClick={() => updateNodeData(id, { count: Math.min(10, data.count + 1) })}
+            disabled={data.count >= 10}
+            title="Mais"
+          >+</button>
         </div>
 
-        <div className="nodrag nowheel">
+        {/* Modelo (provedor + modelo fundidos num só dropdown) */}
+        <div className={`${styles.modelWrap} nodrag nowheel`}>
           <select
             className={styles.modelSelect}
             value={data.model}
-            onChange={e => updateNodeData(id, { model: e.target.value as AnyImageModel })}
+            onChange={e => {
+              const m = e.target.value as AnyImageModel;
+              const opt = MODEL_OPTIONS.find(o => o.model === m);
+              updateNodeData(id, { model: m, provider: opt?.provider ?? data.provider });
+            }}
           >
-            {providerModels.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}
+            {MODEL_OPTIONS.map(o => (
+              <option key={o.model} value={o.model}>{`${MODEL_LABELS[o.model]} (${PROVIDER_INFO[o.provider].name})`}</option>
+            ))}
           </select>
         </div>
 
-        <div className={styles.controlRow}>
-          {/* Stepper de quantidade */}
-          <div className={styles.stepper}>
-            <button
-              className={styles.stepBtn}
-              onClick={() => updateNodeData(id, { count: Math.max(1, data.count - 1) })}
-              disabled={data.count <= 1}
-              title="Menos"
-            >−</button>
-            <span className={styles.stepValue}>{data.count}</span>
-            <button
-              className={styles.stepBtn}
-              onClick={() => updateNodeData(id, { count: Math.min(10, data.count + 1) })}
-              disabled={data.count >= 10}
-              title="Mais"
-            >+</button>
-          </div>
+        {/* Proporção (pílula com ícone dinâmico) */}
+        <RatioControl value={data.ratio} onChange={(r: Ratio) => updateNodeData(id, { ratio: r })} />
 
-          {/* Pílula de proporção (dropdown) */}
-          <RatioControl value={data.ratio} onChange={(r: Ratio) => updateNodeData(id, { ratio: r })} />
+        {/* Opções (placeholder visual, igual à referência) */}
+        <button className={styles.gearBtn} title="Opções">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
 
-          {/* Botão gerar (play num círculo) */}
-          <button
-            className={styles.genBtn}
-            onClick={handleGenerate}
-            disabled={!canGenerate}
-            title="Gerar imagem"
-          >
-            {generating
-              ? <span className={styles.spinnerSm} />
-              : <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>}
-          </button>
-        </div>
+        {/* Gerar (play num círculo) */}
+        <button
+          className={styles.genBtn}
+          onClick={handleGenerate}
+          disabled={!canGenerate}
+          title="Gerar imagem"
+        >
+          {generating
+            ? <span className={styles.spinnerSm} />
+            : <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>}
+        </button>
       </div>
 
       <Handle type="source" position={Position.Right} id="gen-out" className={styles.handle} />

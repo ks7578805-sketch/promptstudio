@@ -10,7 +10,7 @@
   --n-text3: #70707a;
   --n-accent: #e53935;
 
-  width: 300px;
+  width: 340px;
   background: var(--n-bg);
   border: 1px solid var(--n-border);
   border-radius: 14px;
@@ -20,7 +20,7 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.node.selected { border-color: var(--n-border-strong); }
+.node.selected { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6, 0 10px 30px rgba(0, 0, 0, 0.4); }
 .node.generating { border-color: var(--n-accent); }
 
 /* ── Toolbar de hover ───────────────────────────────────────── */
@@ -80,7 +80,9 @@
 /* ── Preview / output ───────────────────────────────────────── */
 .preview {
   margin: 10px;
-  height: 150px;
+  /* a altura vem do aspect-ratio aplicado inline (segue a proporção escolhida);
+     nada de height/min-height fixo aqui, senão sobrescreve o formato */
+  width: calc(100% - 20px);
   border-radius: 10px;
   background: #121214;
   border: 1px solid var(--n-border);
@@ -133,57 +135,43 @@
 /* ── Barra de controles inferior ────────────────────────────── */
 .controls {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   padding: 10px;
 }
 
-.segmented {
-  display: flex;
-  gap: 3px;
-  padding: 3px;
-  background: var(--n-surface);
-  border-radius: 9px;
-}
-.segBtn {
-  flex: 1;
-  height: 26px;
-  border: none;
-  border-radius: 6px;
-  background: none;
-  color: var(--n-text2);
-  font-size: 11.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.segBtn:hover { color: var(--n-text); }
-.segActive {
-  background: var(--n-bg-elevated);
-  color: var(--n-text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
+.modelWrap { flex: 1; min-width: 0; }
 
 .modelSelect {
   width: 100%;
-  height: 32px;
-  padding: 0 10px;
+  height: 30px;
+  padding: 0 8px;
   background: var(--n-surface);
   border: 1px solid var(--n-border);
   border-radius: 8px;
   color: var(--n-text);
-  font-size: 12px;
+  font-size: 11.5px;
   font-family: inherit;
   cursor: pointer;
   appearance: none;
+  text-overflow: ellipsis;
 }
 
-.controlRow {
+.gearBtn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--n-border);
+  border-radius: 8px;
+  background: var(--n-surface);
+  color: var(--n-text2);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
 }
+.gearBtn:hover { color: var(--n-text); border-color: var(--n-border-strong); }
 
 .stepper {
   display: flex;
@@ -218,9 +206,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
   border: none;
   border-radius: 50%;
   background: var(--n-accent);
