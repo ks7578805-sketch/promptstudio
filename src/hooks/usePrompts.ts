@@ -37,10 +37,21 @@ export function usePrompts(uid: string | null) {
       // Garante que a biblioteca curada foi copiada para a conta no 1º login.
       // Pode levar alguns segundos (copia todas as imagens) — sinaliza com `seeding`.
       setSeeding(true);
+      let seedResult;
       try {
-        await ensureUserSeeded(uid);
+        seedResult = await ensureUserSeeded(uid);
       } finally {
         setSeeding(false);
+      }
+
+      // Acabou de semear: usa os dados copiados direto (evita a race de
+      // read-after-write — a leitura imediata da subcoleção volta vazia).
+      if (seedResult.seeded) {
+        const sortedSections = [...seedResult.sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const sortedPrompts = [...seedResult.prompts].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+        setSections(sortedSections);
+        setPrompts(sortedPrompts);
+        return;
       }
 
       const timeout = new Promise<never>((_, reject) =>
