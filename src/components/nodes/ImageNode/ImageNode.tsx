@@ -1,12 +1,28 @@
-import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
+import { useCallback, useState } from 'react';
+import { Handle, Position, type NodeProps, type Node, useReactFlow } from '@xyflow/react';
 import type { ImageNodeData } from '../../../lib/spacesTypes';
+import { NodeHoverToolbar } from '../NodeHoverToolbar';
 import styles from './ImageNode.module.css';
 
 type ImageSpaceNode = Node<ImageNodeData, 'image'>;
 
-export function ImageNode({ data }: NodeProps<ImageSpaceNode>) {
+export function ImageNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps<ImageSpaceNode>) {
+  const { addNodes } = useReactFlow();
+  const [hovered, setHovered] = useState(false);
+
+  const duplicate = useCallback(() => {
+    addNodes([{
+      id: `image_${Date.now()}`,
+      type: 'image' as const,
+      position: { x: positionAbsoluteX + 40, y: positionAbsoluteY + 40 },
+      data: { ...data },
+    }]);
+  }, [addNodes, data, positionAbsoluteX, positionAbsoluteY]);
+
   return (
-    <div className={styles.node}>
+    <div className={styles.node} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <NodeHoverToolbar nodeId={id} visible={hovered || !!selected} onDuplicate={data.url ? duplicate : undefined} />
+
       <Handle type="target" position={Position.Left} id="img-in" className={styles.handle} />
       <div className={styles.imgWrap}>
         {data.url ? (

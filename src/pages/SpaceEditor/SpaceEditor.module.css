@@ -72,6 +72,23 @@
 
 .fileInput { display: none; }
 
+.dropError {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 400;
+  max-width: 90vw;
+  padding: 10px 16px;
+  background: #B71C1C;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
 .canvas {
   flex: 1;
   position: relative;

@@ -36,6 +36,7 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState(spaceName);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [dropError, setDropError] = useState<string | null>(null);
   const pendingPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,6 +74,13 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [nodes, edges, loaded, spaceId]);
 
+  // Auto-dismiss do aviso de erro de upload
+  useEffect(() => {
+    if (!dropError) return;
+    const t = setTimeout(() => setDropError(null), 6000);
+    return () => clearTimeout(t);
+  }, [dropError]);
+
   const onConnect = useCallback((conn: Connection) => {
     setEdges(eds => addEdge(conn, eds));
   }, [setEdges]);
@@ -107,8 +115,7 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
   }, [closeMenu, createNode]);
 
   // Drag-and-drop no canvas.
-  // IMPORTANTE: precisa de preventDefault() + dropEffect SEMPRE no dragover,
-  // senão o navegador bloqueia o drop e o onDrop nunca dispara.
+  // preventDefault() + dropEffect SEMPRE no dragover, senão o navegador bloqueia o drop.
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
@@ -122,16 +129,22 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
     const files = Array.from(e.dataTransfer.files ?? []).filter(f => f.type.startsWith('image/'));
     if (files.length) {
       files.forEach(async (file, i) => {
-        const imageId = `upload_${Date.now()}_${i}`;
-        const imgRef = storageRef(storage, `spaces/${spaceId}/images/${imageId}`);
-        await uploadBytes(imgRef, file);
-        const url = await getDownloadURL(imgRef);
-        rfAddNodes([{
-          id: `image_${imageId}`,
-          type: 'image' as const,
-          position: { x: pos.x + i * 220, y: pos.y },
-          data: { type: 'image' as const, url, label: file.name.replace(/\.[^.]+$/, ''), spaceId },
-        }]);
+        try {
+          const imageId = `upload_${Date.now()}_${i}`;
+          const imgRef = storageRef(storage, `spaces/${spaceId}/images/${imageId}`);
+          await uploadBytes(imgRef, file);
+          const url = await getDownloadURL(imgRef);
+          rfAddNodes([{
+            id: `image_${imageId}`,
+            type: 'image' as const,
+            position: { x: pos.x + i * 220, y: pos.y },
+            data: { type: 'image' as const, url, label: file.name.replace(/\.[^.]+$/, ''), spaceId },
+          }]);
+        } catch (err) {
+          // upload falhou (ex.: CORS do bucket não configurado) — avisa em vez de morrer mudo
+          console.error('Falha ao subir imagem:', err);
+          setDropError('Não foi possível subir a imagem. Verifique a configuração de CORS do Storage.');
+        }
       });
       return;
     }
@@ -230,6 +243,13 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
           <MiniMap nodeColor={() => 'var(--red)'} maskColor="rgba(0,0,0,0.2)" />
         </ReactFlow>
       </div>
+
+      {/* Aviso de erro de upload (ex.: CORS) */}
+      {dropError && (
+        <div className={styles.dropError} onClick={() => setDropError(null)}>
+          {dropError}
+        </div>
+      )}
 
       {/* Menu de contexto (botão direito) */}
       {contextMenu && (

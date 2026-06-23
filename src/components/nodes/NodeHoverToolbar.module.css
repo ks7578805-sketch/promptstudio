@@ -1,0 +1,25 @@
+.toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: #242427;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #a6a6ad;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.btn:hover { background: #2c2c30; color: #f1f1f3; }
+.danger:hover { background: rgba(229, 57, 53, 0.18); color: #ff6b66; }

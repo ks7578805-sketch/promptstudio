@@ -1,19 +1,32 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Handle, Position, type NodeProps, type Node, useReactFlow } from '@xyflow/react';
 import type { TextNodeData } from '../../../lib/spacesTypes';
+import { NodeHoverToolbar } from '../NodeHoverToolbar';
 import styles from './TextNode.module.css';
 
 type TextSpaceNode = Node<TextNodeData, 'text'>;
 
-export function TextNode({ id, data }: NodeProps<TextSpaceNode>) {
-  const { updateNodeData } = useReactFlow();
+export function TextNode({ id, data, selected, positionAbsoluteX, positionAbsoluteY }: NodeProps<TextSpaceNode>) {
+  const { updateNodeData, addNodes } = useReactFlow();
+  const [hovered, setHovered] = useState(false);
 
   const onChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateNodeData(id, { content: e.target.value });
   }, [id, updateNodeData]);
 
+  const duplicate = useCallback(() => {
+    addNodes([{
+      id: `text_${Date.now()}`,
+      type: 'text' as const,
+      position: { x: positionAbsoluteX + 40, y: positionAbsoluteY + 40 },
+      data: { ...data },
+    }]);
+  }, [addNodes, data, positionAbsoluteX, positionAbsoluteY]);
+
   return (
-    <div className={styles.node}>
+    <div className={styles.node} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <NodeHoverToolbar nodeId={id} visible={hovered || !!selected} onDuplicate={duplicate} />
+
       <div className={styles.header}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
