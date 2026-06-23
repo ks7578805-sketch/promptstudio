@@ -99,32 +99,3 @@
   background: var(--bg2);
 }
 
-/* Context menu */
-.ctxMenu {
-  position: fixed;
-  z-index: 300;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow-md);
-  padding: 4px;
-  min-width: 160px;
-}
-
-.ctxItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-  border-radius: 6px;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  text-align: left;
-  transition: background var(--transition);
-}
-.ctxItem:hover { background: var(--bg3); }

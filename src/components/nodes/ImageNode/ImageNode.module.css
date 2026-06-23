@@ -17,7 +17,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
+
+.dragGrip {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.dragGrip:active { cursor: grabbing; }
+
+.node:hover .dragGrip { opacity: 1; }
 
 .img {
   display: block;

@@ -11,6 +11,7 @@ import { ImageNode } from '../../components/nodes/ImageNode/ImageNode';
 import { TextNode } from '../../components/nodes/TextNode/TextNode';
 import { GeneratorNode } from '../../components/nodes/GeneratorNode/GeneratorNode';
 import type { SpaceNode, SpaceEdge, ImageNodeData, TextNodeData, GeneratorNodeData } from '../../lib/spacesTypes';
+import { ContextMenu, type NodeAction } from './ContextMenu';
 import styles from './SpaceEditor.module.css';
 
 const nodeTypes: NodeTypes = {
@@ -38,7 +39,6 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
   const pendingPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropPos = useRef<{ x: number; y: number }>({ x: 200, y: 200 });
   const { screenToFlowPosition, addNodes: rfAddNodes } = useReactFlow();
 
   // Load from Firestore
@@ -96,34 +96,62 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
     rfAddNodes([{ id, type, position: pos, data } as SpaceNode]);
   }, [closeMenu, spaceId, rfAddNodes]);
 
-  // File drag-and-drop
+  // Ação vinda do menu de contexto: cria nó ou abre upload, sempre na pos. do cursor
+  const handleMenuCreate = useCallback((action: NodeAction) => {
+    if (action === 'upload') {
+      closeMenu();
+      fileInputRef.current?.click();
+    } else {
+      createNode(action);
+    }
+  }, [closeMenu, createNode]);
+
+  // Drag-and-drop no canvas.
+  // IMPORTANTE: precisa de preventDefault() + dropEffect SEMPRE no dragover,
+  // senão o navegador bloqueia o drop e o onDrop nunca dispara.
   const onDragOver = useCallback((e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes('Files')) e.preventDefault();
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
   }, []);
 
   const onDrop = useCallback((e: React.DragEvent) => {
-    if (!e.dataTransfer.files.length) return;
     e.preventDefault();
-    dropPos.current = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    files.forEach(async (file, i) => {
-      const imageId = `upload_${Date.now()}_${i}`;
-      const imgRef = storageRef(storage, `spaces/${spaceId}/images/${imageId}`);
-      await uploadBytes(imgRef, file);
-      const url = await getDownloadURL(imgRef);
-      const nodeId = `image_${imageId}`;
+    const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+
+    // Caso 1: arquivo(s) de imagem vindos do SO → upload pro Storage, salva só a URL
+    const files = Array.from(e.dataTransfer.files ?? []).filter(f => f.type.startsWith('image/'));
+    if (files.length) {
+      files.forEach(async (file, i) => {
+        const imageId = `upload_${Date.now()}_${i}`;
+        const imgRef = storageRef(storage, `spaces/${spaceId}/images/${imageId}`);
+        await uploadBytes(imgRef, file);
+        const url = await getDownloadURL(imgRef);
+        rfAddNodes([{
+          id: `image_${imageId}`,
+          type: 'image' as const,
+          position: { x: pos.x + i * 220, y: pos.y },
+          data: { type: 'image' as const, url, label: file.name.replace(/\.[^.]+$/, ''), spaceId },
+        }]);
+      });
+      return;
+    }
+
+    // Caso 2: drag interno de uma imagem já no canvas → reusa a URL (sem re-upload)
+    const url = e.dataTransfer.getData('application/x-image-url') || e.dataTransfer.getData('text/uri-list');
+    if (url) {
       rfAddNodes([{
-        id: nodeId,
+        id: `image_${Date.now()}`,
         type: 'image' as const,
-        position: { x: dropPos.current.x + i * 220, y: dropPos.current.y },
-        data: { type: 'image' as const, url, label: file.name.replace(/\.[^.]+$/, ''), spaceId },
+        position: pos,
+        data: { type: 'image' as const, url, spaceId },
       }]);
-    });
+    }
   }, [screenToFlowPosition, spaceId, rfAddNodes]);
 
-  // Upload via button
+  // Upload via botão/menu — usa a última posição apontada (cursor) como base
   const onFileInput = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []).filter(f => f.type.startsWith('image/'));
+    const base = pendingPos.current;
     for (let i = 0; i < files.length; i++) {
       const imageId = `upload_${Date.now()}_${i}`;
       const imgRef = storageRef(storage, `spaces/${spaceId}/images/${imageId}`);
@@ -132,7 +160,7 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
       const nodeId = `image_${imageId}`;
       rfAddNodes([{
         id: nodeId, type: 'image' as const,
-        position: { x: 200 + i * 220, y: 200 },
+        position: { x: base.x + i * 220, y: base.y },
         data: { type: 'image' as const, url, label: files[i].name.replace(/\.[^.]+$/, ''), spaceId },
       }]);
     }
@@ -194,7 +222,7 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
           onConnect={onConnect}
           onPaneContextMenu={onPaneContextMenu}
           fitView={loaded && nodes.length > 0}
-          deleteKeyCode="Delete"
+          deleteKeyCode={['Delete', 'Backspace']}
           multiSelectionKeyCode="Shift"
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
@@ -203,28 +231,14 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
         </ReactFlow>
       </div>
 
-      {/* Context menu */}
+      {/* Menu de contexto (botão direito) */}
       {contextMenu && (
-        <div className={styles.ctxMenu} style={{ left: contextMenu.x, top: contextMenu.y }}>
-          <button className={styles.ctxItem} onClick={() => createNode('text')}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>
-            </svg>
-            Texto
-          </button>
-          <button className={styles.ctxItem} onClick={() => createNode('generator')}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
-            Imagem (gerar)
-          </button>
-          <button className={styles.ctxItem} onClick={() => { closeMenu(); fileInputRef.current?.click(); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            Upload
-          </button>
-        </div>
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={closeMenu}
+          onCreate={handleMenuCreate}
+        />
       )}
     </div>
   );

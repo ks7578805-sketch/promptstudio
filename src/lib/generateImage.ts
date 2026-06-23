@@ -1,10 +1,18 @@
 import type { Provider, AnyImageModel } from './types';
 
+// OpenAI gpt-image aceita poucos tamanhos — mapeia cada proporção para o
+// mais próximo por orientação (quadrado / paisagem / retrato).
 const SIZE_MAP: Record<string, string> = {
   '1:1': '1024x1024',
-  '9:16': '1024x1792',
   '16:9': '1792x1024',
+  '9:16': '1024x1792',
+  '2:3': '1024x1792',
+  '3:4': '1024x1792',
+  '1:2': '1024x1792',
+  '2:1': '1792x1024',
   '4:5': '1024x1280',
+  '3:2': '1792x1024',
+  '4:3': '1792x1024',
 };
 
 async function callApi(endpoint: string, payload: unknown): Promise<string> {
