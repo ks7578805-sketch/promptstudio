@@ -106,17 +106,17 @@
   background: linear-gradient(to top, rgba(13, 13, 15, 0.97) 58%, rgba(13, 13, 15, 0.7) 82%, rgba(13, 13, 15, 0));
 }
 
-/* T3: área de clique do prompt = largura toda + alta o suficiente pra clicar fácil
-   em qualquer ponto. O próprio textarea é o alvo (foco nativo ao clicar). */
+/* Prompt SEM caixa: só o texto, transparente. Área de clique continua ocupando
+   toda a largura da base (min-height alto) — clicar em qualquer ponto foca. */
 .textarea {
   display: block;
   width: 100%;
   min-height: 56px;
   max-height: 160px;
-  padding: 10px 12px;
-  background: rgba(20, 20, 23, 0.82);
-  border: 1px solid var(--n-border);
-  border-radius: 10px;
+  padding: 8px 2px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   color: var(--n-text);
   font-size: 13px;
   line-height: 1.45;
@@ -126,7 +126,7 @@
   cursor: text;
 }
 .textarea::placeholder { color: var(--n-text3); }
-.textarea:focus { outline: none; border-color: var(--n-border-strong); }
+.textarea:focus { outline: none; }
 
 .errorMsg {
   padding: 6px 9px;
@@ -139,10 +139,19 @@
 }
 
 /* ── Barra de controles (uma linha) ─────────────────────────── */
+/* Oculta por padrão; aparece só no hover do nó. Como vive no .baseOverlay
+   (absolute), o fade NÃO redimensiona nem empurra o layout do nó. */
 .controls {
   display: flex;
   align-items: center;
   gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.node:hover .controls {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .stepper {

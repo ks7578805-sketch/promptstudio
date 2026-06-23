@@ -225,7 +225,7 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
       onMouseLeave={() => setHovered(false)}
     >
       {/* Toolbar de hover, acima do nó */}
-      <NodeToolbar isVisible={hovered || selected} position={Position.Top} offset={10} className={styles.toolbar}>
+      <NodeToolbar isVisible={hovered} position={Position.Top} offset={10} className={styles.toolbar}>
         <button className={styles.tbBtn} onClick={handleGenerate} disabled={!canGenerate} title="Gerar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>
         </button>
