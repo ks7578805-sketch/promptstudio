@@ -113,11 +113,85 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
 
   const generating = status === 'generating';
   const canGenerate = !generating && !!data.prompt.trim();
+  // Card só assume a forma da proporção quando há resultado (ou está gerando).
+  // Vazio = card compacto (altura automática) pra nunca empurrar os controles pra fora.
+  const hasResult = !!preview || generating;
+
+  // Form (prompt + controles) reaproveitado nos dois layouts
+  const form = (
+    <>
+      {error && status === 'error' && <div className={styles.errorMsg}>{error}</div>}
+
+      <textarea
+        className={`${styles.textarea} nodrag nowheel`}
+        placeholder="Descreva a imagem que quer gerar..."
+        value={data.prompt}
+        onChange={e => updateNodeData(id, { prompt: e.target.value })}
+        rows={2}
+      />
+
+      <div className={`${styles.controls} nodrag`}>
+        {/* Quantidade */}
+        <div className={styles.stepper}>
+          <button
+            className={styles.stepBtn}
+            onClick={() => updateNodeData(id, { count: Math.max(1, data.count - 1) })}
+            disabled={data.count <= 1}
+            title="Menos"
+          >−</button>
+          <span className={styles.stepValue}>{data.count}</span>
+          <button
+            className={styles.stepBtn}
+            onClick={() => updateNodeData(id, { count: Math.min(10, data.count + 1) })}
+            disabled={data.count >= 10}
+            title="Mais"
+          >+</button>
+        </div>
+
+        {/* Modelo (provedor + modelo fundidos) */}
+        <div className={`${styles.modelWrap} nodrag nowheel`}>
+          <select
+            className={styles.modelSelect}
+            value={data.model}
+            onChange={e => {
+              const m = e.target.value as AnyImageModel;
+              const opt = MODEL_OPTIONS.find(o => o.model === m);
+              updateNodeData(id, { model: m, provider: opt?.provider ?? data.provider });
+            }}
+          >
+            {MODEL_OPTIONS.map(o => (
+              <option key={o.model} value={o.model}>{`${MODEL_LABELS[o.model]} (${PROVIDER_INFO[o.provider].name})`}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Proporção (pílula com ícone dinâmico) */}
+        <RatioControl value={data.ratio} onChange={(r: Ratio) => updateNodeData(id, { ratio: r })} />
+
+        {/* Opções (placeholder visual) */}
+        <button className={styles.gearBtn} title="Opções">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+
+        {/* Gerar (play num círculo) */}
+        <button
+          className={styles.genBtn}
+          onClick={handleGenerate}
+          disabled={!canGenerate}
+          title="Gerar imagem"
+        >
+          {generating
+            ? <span className={styles.spinnerSm} />
+            : <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>}
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <div
       className={`${styles.node} ${generating ? styles.generating : ''} ${selected ? styles.selected : ''}`}
-      style={{ aspectRatio: data.ratio.replace(':', '/') }}
+      style={hasResult ? { aspectRatio: data.ratio.replace(':', '/') } : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -151,88 +225,20 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
         {generating && <span className={styles.spinner} />}
       </div>
 
-      {/* Corpo: imagem/preview ocupa o principal; prompt + controles sobrepostos na base */}
-      <div className={styles.body}>
-        {generating ? (
-          <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
-        ) : preview ? (
-          <img src={preview} alt="resultado" className={styles.previewImg} draggable={false} />
-        ) : (
-          <div className={styles.previewEmpty}>
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <span>Sua imagem aparece aqui</span>
-          </div>
-        )}
-
-        {/* Overlay na base */}
-        <div className={styles.baseOverlay}>
-          {error && status === 'error' && <div className={styles.errorMsg}>{error}</div>}
-
-          <textarea
-            className={`${styles.textarea} nodrag nowheel`}
-            placeholder="Descreva a imagem que quer gerar..."
-            value={data.prompt}
-            onChange={e => updateNodeData(id, { prompt: e.target.value })}
-            rows={2}
-          />
-
-          <div className={`${styles.controls} nodrag`}>
-            {/* Quantidade */}
-            <div className={styles.stepper}>
-              <button
-                className={styles.stepBtn}
-                onClick={() => updateNodeData(id, { count: Math.max(1, data.count - 1) })}
-                disabled={data.count <= 1}
-                title="Menos"
-              >−</button>
-              <span className={styles.stepValue}>{data.count}</span>
-              <button
-                className={styles.stepBtn}
-                onClick={() => updateNodeData(id, { count: Math.min(10, data.count + 1) })}
-                disabled={data.count >= 10}
-                title="Mais"
-              >+</button>
-            </div>
-
-            {/* Modelo (provedor + modelo fundidos) */}
-            <div className={`${styles.modelWrap} nodrag nowheel`}>
-              <select
-                className={styles.modelSelect}
-                value={data.model}
-                onChange={e => {
-                  const m = e.target.value as AnyImageModel;
-                  const opt = MODEL_OPTIONS.find(o => o.model === m);
-                  updateNodeData(id, { model: m, provider: opt?.provider ?? data.provider });
-                }}
-              >
-                {MODEL_OPTIONS.map(o => (
-                  <option key={o.model} value={o.model}>{`${MODEL_LABELS[o.model]} (${PROVIDER_INFO[o.provider].name})`}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Proporção (pílula com ícone dinâmico) */}
-            <RatioControl value={data.ratio} onChange={(r: Ratio) => updateNodeData(id, { ratio: r })} />
-
-            {/* Opções (placeholder visual) */}
-            <button className={styles.gearBtn} title="Opções">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </button>
-
-            {/* Gerar (play num círculo) */}
-            <button
-              className={styles.genBtn}
-              onClick={handleGenerate}
-              disabled={!canGenerate}
-              title="Gerar imagem"
-            >
-              {generating
-                ? <span className={styles.spinnerSm} />
-                : <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>}
-            </button>
-          </div>
+      {hasResult ? (
+        /* Com resultado: card assume a proporção, imagem preenche o corpo, controles sobrepostos na base */
+        <div className={styles.body}>
+          {generating ? (
+            <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
+          ) : (
+            <img src={preview!} alt="resultado" className={styles.previewImg} draggable={false} />
+          )}
+          <div className={styles.baseOverlay}>{form}</div>
         </div>
-      </div>
+      ) : (
+        /* Vazio: card compacto, prompt + controles em fluxo normal (altura automática) */
+        <div className={styles.compactBody}>{form}</div>
+      )}
 
       <Handle type="source" position={Position.Right} id="gen-out" className={styles.handle} />
     </div>
