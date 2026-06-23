@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { initializeFirestore, persistentLocalCache, getFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 
 // Persistência offline: setDoc resolve imediatamente no cache local
 // e sincroniza com o servidor em background — salvar nunca trava
-let db;
+let db: Firestore;
 try {
   db = initializeFirestore(app, { localCache: persistentLocalCache() });
 } catch {
@@ -24,3 +25,4 @@ try {
 }
 export { db };
 export const storage = getStorage(app);
+export const auth = getAuth(app);

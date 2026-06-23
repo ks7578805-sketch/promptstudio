@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   collection,
   getDocs,
@@ -12,22 +12,29 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { ensureUserSeeded } from '../lib/seedLibrary';
 import type { Prompt, Section } from '../lib/types';
 
-export function usePrompts() {
+/** Dados de prompts/seções, isolados por usuário em users/{uid}/... */
+export function usePrompts(uid: string | null) {
   const [sections, setSections] = useState<Section[]>([]);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const sectionsCol = useCallback(() => collection(db, 'users', uid!, 'sections'), [uid]);
+  const promptsCol = useCallback(() => collection(db, 'users', uid!, 'prompts'), [uid]);
+  const sectionDoc = useCallback((id: string) => doc(db, 'users', uid!, 'sections', id), [uid]);
+  const promptDoc = useCallback((id: string) => doc(db, 'users', uid!, 'prompts', id), [uid]);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
+    if (!uid) return;
     try {
       setLoading(true);
       setError(null);
+
+      // Garante que a biblioteca curada foi copiada para a conta no 1º login
+      await ensureUserSeeded(uid);
 
       const timeout = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Sem conexão — verifique sua internet e tente novamente.')), 10000)
@@ -35,8 +42,8 @@ export function usePrompts() {
 
       const [sectionsSnap, promptsSnap] = await Promise.race([
         Promise.all([
-          getDocs(query(collection(db, 'sections'), orderBy('order', 'asc'))),
-          getDocs(collection(db, 'prompts')),
+          getDocs(query(sectionsCol(), orderBy('order', 'asc'))),
+          getDocs(promptsCol()),
         ]),
         timeout,
       ]);
@@ -44,7 +51,6 @@ export function usePrompts() {
       const loadedSections = sectionsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Section));
       const loadedPrompts = promptsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Prompt));
 
-      // Ordenar prompts por updatedAt desc
       loadedPrompts.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
       setSections(loadedSections);
@@ -56,19 +62,21 @@ export function usePrompts() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [uid, sectionsCol, promptsCol]);
+
+  useEffect(() => {
+    if (uid) loadData();
+    else { setSections([]); setPrompts([]); setLoading(false); }
+  }, [uid, loadData]);
 
   async function savePrompt(prompt: Prompt) {
+    if (!uid) return;
     const { id, ...rawData } = prompt;
-    // Firebase v11 não aceita undefined — remove campos undefined
     const data = Object.fromEntries(
       Object.entries(rawData).filter(([, v]) => v !== undefined)
     );
 
-    // Com offline persistence habilitado em firebase.ts, este setDoc
-    // resolve imediatamente após gravar no cache local (IndexedDB)
-    // e sincroniza com o servidor em background — nunca trava
-    await setDoc(doc(db, 'prompts', id), { ...data, updatedAt: Date.now() });
+    await setDoc(promptDoc(id), { ...data, updatedAt: Date.now() });
 
     setPrompts(prev => {
       const exists = prev.findIndex(p => p.id === id);
@@ -80,13 +88,15 @@ export function usePrompts() {
   }
 
   async function deletePrompt(id: string) {
-    await deleteDoc(doc(db, 'prompts', id));
+    if (!uid) return;
+    await deleteDoc(promptDoc(id));
     setPrompts(prev => prev.filter(p => p.id !== id));
   }
 
   async function saveSection(section: Section) {
+    if (!uid) return;
     const { id, ...data } = section;
-    await setDoc(doc(db, 'sections', id), data);
+    await setDoc(sectionDoc(id), data);
     setSections(prev => {
       const exists = prev.findIndex(s => s.id === id);
       if (exists >= 0) return prev.map(s => s.id === id ? { id, ...data } : s);
@@ -95,33 +105,35 @@ export function usePrompts() {
   }
 
   async function deleteSection(id: string) {
-    await deleteDoc(doc(db, 'sections', id));
+    if (!uid) return;
+    await deleteDoc(sectionDoc(id));
     setSections(prev => prev.filter(s => s.id !== id));
   }
 
   async function reorderPrompts(newPrompts: Prompt[]) {
+    if (!uid) return;
     const batch = writeBatch(db);
     newPrompts.forEach((p, i) => {
-      batch.update(doc(db, 'prompts', p.id), { order: i });
+      batch.update(promptDoc(p.id), { order: i });
     });
     await batch.commit();
     setPrompts(newPrompts);
   }
 
   async function reorderSections(newSections: Section[]) {
+    if (!uid) return;
     const batch = writeBatch(db);
     newSections.forEach((s, i) => {
-      batch.update(doc(db, 'sections', s.id), { order: i });
+      batch.update(sectionDoc(s.id), { order: i });
     });
     await batch.commit();
     setSections(newSections);
   }
 
   async function incrementCopies(id: string) {
-    // Otimista: atualiza UI imediatamente
+    if (!uid) return;
     setPrompts(prev => prev.map(p => p.id === id ? { ...p, copies: (p.copies ?? 0) + 1 } : p));
-    // Persiste no Firestore em background
-    updateDoc(doc(db, 'prompts', id), { copies: increment(1) }).catch(console.error);
+    updateDoc(promptDoc(id), { copies: increment(1) }).catch(console.error);
   }
 
   return {

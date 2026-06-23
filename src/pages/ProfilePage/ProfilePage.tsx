@@ -1,18 +1,22 @@
 import styles from './ProfilePage.module.css';
 
 interface ProfilePageProps {
+  name: string;
+  email: string | null;
   totalPrompts: number;
   totalGenerated: number;
+  onLogout: () => void;
 }
 
-export function ProfilePage({ totalPrompts, totalGenerated }: ProfilePageProps) {
+export function ProfilePage({ name, email, totalPrompts, totalGenerated, onLogout }: ProfilePageProps) {
+  const initial = (name?.trim()?.[0] ?? '👤').toUpperCase();
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <div className={styles.avatar}>👤</div>
+        <div className={styles.avatar}>{initial}</div>
         <div>
-          <div className={styles.name}>Convidado</div>
-          <div className={styles.subtitle}>Login em breve</div>
+          <div className={styles.name}>{name}</div>
+          <div className={styles.subtitle}>{email ?? 'Conta conectada'}</div>
         </div>
       </div>
 
@@ -46,9 +50,9 @@ export function ProfilePage({ totalPrompts, totalGenerated }: ProfilePageProps) 
         </button>
       </div>
 
-      <div className={styles.softNote}>
-        Em breve: <span>login</span>, favoritos sincronizados e contas
-      </div>
+      <button className={styles.logoutBtn} onClick={onLogout}>
+        Sair da conta
+      </button>
     </div>
   );
 }

@@ -1,33 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
-const STORAGE_KEY = 'promptstudio-favorites';
-
-export function useFavorites() {
-  const [favorites, setFavorites] = useState<Set<string>>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return new Set(raw ? JSON.parse(raw) : []);
-    } catch {
-      return new Set();
-    }
-  });
+/** Favoritos por usuário, salvos em users/{uid}.favorites (sincroniza entre dispositivos) */
+export function useFavorites(uid: string | null) {
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...favorites]));
-  }, [favorites]);
+    if (!uid) { setFavorites(new Set()); return; }
+    getDoc(doc(db, 'users', uid))
+      .then(snap => {
+        const favs = snap.exists() ? (snap.data().favorites as string[] | undefined) : undefined;
+        setFavorites(new Set(favs ?? []));
+      })
+      .catch(console.error);
+  }, [uid]);
 
-  function toggleFavorite(id: string) {
+  const toggleFavorite = useCallback((id: string) => {
     setFavorites(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      if (uid) {
+        setDoc(doc(db, 'users', uid), { favorites: [...next] }, { merge: true }).catch(console.error);
+      }
       return next;
     });
-  }
+  }, [uid]);
 
-  function isFavorite(id: string) {
-    return favorites.has(id);
-  }
+  const isFavorite = useCallback((id: string) => favorites.has(id), [favorites]);
 
   return { favorites, toggleFavorite, isFavorite };
 }

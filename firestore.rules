@@ -1,8 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // Biblioteca global curada — usada apenas como seed inicial.
+    // Qualquer usuário autenticado lê; ninguém escreve pelo cliente.
+    match /sections/{id} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    match /prompts/{id} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Dados por usuário: só o dono lê e escreve.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }

@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Imagens-seed da biblioteca global — leitura para autenticados, sem escrita pelo cliente
+    match /prompts/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Imagens dos spaces (spaceId é id único global) — autenticados
+    match /spaces/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Arquivos por usuário (imagens de prompt, etc.) — só o dono
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

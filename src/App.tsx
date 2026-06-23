@@ -16,9 +16,15 @@ import { usePrompts } from './hooks/usePrompts';
 import { useFavorites } from './hooks/useFavorites';
 import { useGenerationQueue } from './hooks/useGenerationQueue';
 import { useTheme } from './hooks/useTheme';
+import { useAuth, logout } from './hooks/useAuth';
+import { SpacesPage } from './pages/SpacesPage/SpacesPage';
+import { AuthScreen } from './pages/AuthScreen/AuthScreen';
 import type { SortOption, PeopleFilter, Prompt, Section } from './lib/types';
 
 export default function App() {
+  const { user, loading: authLoading } = useAuth();
+  const uid = user?.uid ?? null;
+
   const {
     sections, prompts, loading, error,
     savePrompt, deletePrompt,
@@ -26,9 +32,9 @@ export default function App() {
     reorderPrompts, reorderSections,
     incrementCopies,
     reload,
-  } = usePrompts();
+  } = usePrompts(uid);
 
-  const { favorites, toggleFavorite } = useFavorites();
+  const { favorites, toggleFavorite } = useFavorites(uid);
   const { toast, showToast } = useToast();
   const queue = useGenerationQueue();
   const { theme, setTheme } = useTheme();
@@ -108,7 +114,7 @@ export default function App() {
     if (hasNewImage) {
       void (async () => {
         try {
-          const storageRef = ref(storage, `prompts/${prompt.id}`);
+          const storageRef = ref(storage, `users/${uid}/prompts/${prompt.id}`);
           await uploadString(storageRef, prompt.image!, 'data_url');
           const imageUrl = await getDownloadURL(storageRef);
           await savePrompt({ ...prompt, image: imageUrl });
@@ -153,6 +159,7 @@ export default function App() {
   }
 
   function getHeaderTitle() {
+    if (view === 'spaces') return { title: '', highlight: 'Spaces' };
     if (view === 'admin') return { title: 'Painel', highlight: 'Admin' };
     if (view === 'generate') return { title: 'Gerar', highlight: 'Imagem' };
     if (view === 'history') return { title: '', highlight: 'Histórico' };
@@ -165,6 +172,18 @@ export default function App() {
   const { title, highlight } = getHeaderTitle();
   const detailPrompt = prompts.find(p => p.id === detailPromptId) ?? null;
   const detailSection = sections.find(s => s.id === detailPrompt?.sectionId);
+
+  // Gate de autenticação — todo o app fica atrás do login
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>
+        Carregando…
+      </div>
+    );
+  }
+  if (!user || !uid) {
+    return <AuthScreen />;
+  }
 
   return (
     <div style={{ minHeight: '100vh', paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))' }}>
@@ -253,10 +272,15 @@ export default function App() {
         />
       )}
 
+      {view === 'spaces' && <SpacesPage uid={uid} />}
+
       {view === 'profile' && (
         <ProfilePage
+          name={user.displayName || user.email || 'Você'}
+          email={user.email}
           totalPrompts={prompts.length}
           totalGenerated={queue.jobs.length}
+          onLogout={async () => { await logout(); setView('library'); }}
         />
       )}
 

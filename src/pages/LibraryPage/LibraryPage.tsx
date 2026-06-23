@@ -54,8 +54,6 @@ export function LibraryPage({
   onFavorite,
   onCopy,
   onOpenDetail,
-  theme,
-  onToggleTheme,
 }: LibraryPageProps) {
 
   const filtered = useMemo(() => {
