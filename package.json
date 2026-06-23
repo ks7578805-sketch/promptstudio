@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "migrate": "tsx scripts/migrate.ts",
     "detect-people": "tsx scripts/detectPeople.ts",
-    "apply-people": "tsx scripts/applyPeople.ts"
+    "apply-people": "tsx scripts/applyPeople.ts",
+    "apply-cors": "tsx scripts/applyCors.ts"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
