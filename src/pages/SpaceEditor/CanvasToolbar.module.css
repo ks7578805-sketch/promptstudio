@@ -1,0 +1,46 @@
+/* Pílula vertical escura, centralizada na lateral esquerda do canvas. */
+.bar {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px;
+  background: #1b1b1d;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: #a6a6ad;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.btn:hover:not(:disabled) { background: #2c2c30; color: #f1f1f3; }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ferramenta ativa — destaque branco */
+.active {
+  background: #f1f1f3 !important;
+  color: #1b1b1d !important;
+}
+
+.sep {
+  width: 22px;
+  height: 1px;
+  margin: 3px 0;
+  background: rgba(255, 255, 255, 0.10);
+}

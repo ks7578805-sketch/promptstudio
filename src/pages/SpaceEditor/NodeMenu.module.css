@@ -1,0 +1,79 @@
+/* Menu de contexto do nó — painel escuro fixo, posicionado no cursor.
+   Paleta dark fixa (vive fora do tema do app, como o resto do canvas). */
+.menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 214px;
+  padding: 6px;
+  background: #242427;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  animation: nodeMenuIn 0.12s ease;
+}
+
+@keyframes nodeMenuIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #e6e6ea;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.item:hover:not(:disabled) { background: #2f2f34; }
+.item:disabled { cursor: default; }
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  color: #a6a6ad;
+  flex-shrink: 0;
+}
+.item:hover:not(:disabled) .icon { color: #f1f1f3; }
+
+.label { flex: 1; letter-spacing: -0.01em; }
+
+.shortcut {
+  font-size: 11.5px;
+  color: #70707a;
+  font-weight: 600;
+}
+
+.chevron {
+  display: flex;
+  align-items: center;
+  color: #70707a;
+}
+
+/* item desabilitado (Opções placeholder, Iniciar/Adicionar em nós não-geradores) */
+.disabled,
+.item:disabled { opacity: 0.4; }
+
+.sep {
+  height: 1px;
+  margin: 5px 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Excluir em vermelho */
+.danger { color: #ff7a75; }
+.danger .icon { color: #ff7a75; }
+.danger:hover:not(:disabled) { background: rgba(229, 57, 53, 0.16); }
+.danger:hover:not(:disabled) .icon { color: #ff8a85; }
+.danger .shortcut { color: #b96460; }

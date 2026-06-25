@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Handle, Position, NodeToolbar, type NodeProps, type Node,
   useReactFlow, useNodes,
@@ -129,6 +129,16 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
     }
   }, [status, data, id, positionAbsoluteX, positionAbsoluteY, getEdges, getNode, addNodes, addEdges]);
 
+  // Permite que o menu de contexto do nó (no SpaceEditor) dispare a geração deste nó.
+  useEffect(() => {
+    const onGen = (e: Event) => {
+      const ce = e as CustomEvent<{ id: string }>;
+      if (ce.detail?.id === id) handleGenerate();
+    };
+    window.addEventListener('space:node-generate', onGen as EventListener);
+    return () => window.removeEventListener('space:node-generate', onGen as EventListener);
+  }, [id, handleGenerate]);
+
   const duplicate = useCallback(() => {
     addNodes([{
       id: `generator_${Date.now()}`,
@@ -160,6 +170,7 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
       />
 
       <div className={`${styles.controls} nodrag`}>
+        <div className={styles.controlsLeft}>
         {/* Quantidade */}
         <div className={styles.stepper}>
           <button
@@ -199,8 +210,9 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
 
         {/* Opções (placeholder visual) */}
         <button className={styles.gearBtn} title="Opções">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
+        </div>
 
         {/* Gerar (play num círculo) */}
         <button
@@ -211,7 +223,7 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
         >
           {generating
             ? <span className={styles.spinnerSm} />
-            : <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>}
+            : <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>}
         </button>
       </div>
     </>
@@ -225,7 +237,7 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
       onMouseLeave={() => setHovered(false)}
     >
       {/* Toolbar de hover, acima do nó */}
-      <NodeToolbar isVisible={hovered} position={Position.Top} offset={10} className={styles.toolbar}>
+      <NodeToolbar isVisible={hovered || selected} position={Position.Top} offset={10} className={styles.toolbar}>
         <button className={styles.tbBtn} onClick={handleGenerate} disabled={!canGenerate} title="Gerar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4" /></svg>
         </button>
@@ -243,8 +255,11 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
         </button>
       </NodeToolbar>
 
-      <Handle type="target" position={Position.Left} id="ref-in" className={styles.handle} />
+      <Handle type="target" position={Position.Left} id="ref-in" className={styles.handle}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </Handle>
 
+      <div className={styles.inner}>
       {/* Barra de título */}
       <div className={styles.titleBar}>
         <span className={styles.titleIcon}>
@@ -260,11 +275,19 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
           <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
         ) : preview ? (
           <img src={preview} alt="resultado" className={styles.previewImg} draggable={false} />
-        ) : null}
+        ) : (
+          <div className={styles.emptyState} aria-hidden>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Sua imagem aparece aqui</span>
+          </div>
+        )}
         <div className={styles.baseOverlay}>{form}</div>
       </div>
+      </div>
 
-      <Handle type="source" position={Position.Right} id="gen-out" className={styles.handle} />
+      <Handle type="source" position={Position.Right} id="gen-out" className={styles.handle}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </Handle>
     </div>
   );
 }

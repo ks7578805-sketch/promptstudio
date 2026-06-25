@@ -116,3 +116,20 @@
   background: var(--bg2);
 }
 
+/* Conexões entre nós — curva bezier (type:'default'), traço fino, sólido e sutil.
+   Estilizado via CSS pra valer também nas edges já salvas (sem style próprio). */
+.canvas :global(.react-flow__edge-path) {
+  stroke: rgba(170, 172, 182, 0.6);
+  stroke-width: 1.5;
+}
+/* !important pra vencer o style inline do defaultEdgeOptions nos estados hover/selecionada */
+.canvas :global(.react-flow__edge.selected .react-flow__edge-path),
+.canvas :global(.react-flow__edge:hover .react-flow__edge-path) {
+  stroke: rgba(205, 207, 215, 0.95) !important;
+}
+/* Linha enquanto arrasta uma nova conexão */
+.canvas :global(.react-flow__connectionline .react-flow__connection-path) {
+  stroke: rgba(160, 162, 170, 0.7);
+  stroke-width: 1.5;
+}
+

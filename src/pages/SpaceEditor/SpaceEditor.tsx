@@ -12,6 +12,9 @@ import { TextNode } from '../../components/nodes/TextNode/TextNode';
 import { GeneratorNode } from '../../components/nodes/GeneratorNode/GeneratorNode';
 import type { SpaceNode, SpaceEdge, ImageNodeData, TextNodeData, GeneratorNodeData } from '../../lib/spacesTypes';
 import { ContextMenu, type NodeAction } from './ContextMenu';
+import { NodeMenu, type NodeMenuAction } from './NodeMenu';
+import { CanvasToolbar, type Tool } from './CanvasToolbar';
+import { useCanvasHistory } from '../../hooks/useCanvasHistory';
 import styles from './SpaceEditor.module.css';
 
 const nodeTypes: NodeTypes = {
@@ -36,11 +39,14 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState(spaceName);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [nodeMenu, setNodeMenu] = useState<{ x: number; y: number; id: string; canGenerate: boolean } | null>(null);
+  const [tool, setTool] = useState<Tool>('select');
   const [dropError, setDropError] = useState<string | null>(null);
   const pendingPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { screenToFlowPosition, addNodes: rfAddNodes } = useReactFlow();
+  const { undo, redo, canUndo, canRedo } = useCanvasHistory(nodes, edges, setNodes, setEdges, loaded);
 
   // Load from Firestore
   useEffect(() => {
@@ -92,6 +98,67 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
   }, [screenToFlowPosition]);
 
   const closeMenu = useCallback(() => setContextMenu(null), []);
+  const closeNodeMenu = useCallback(() => setNodeMenu(null), []);
+
+  // Clique direito EM CIMA de um nó → menu de contexto do nó na posição do cursor
+  const onNodeContextMenu = useCallback((e: React.MouseEvent, node: SpaceNode) => {
+    e.preventDefault();
+    setContextMenu(null);
+    setNodeMenu({ x: e.clientX, y: e.clientY, id: node.id, canGenerate: node.type === 'generator' });
+  }, []);
+
+  // Ações do menu de nó
+  const onNodeMenuAction = useCallback((action: NodeMenuAction) => {
+    const target = nodeMenu;
+    if (!target) return;
+    const { id } = target;
+    setNodeMenu(null);
+
+    if (action === 'delete') {
+      // Apaga o nó E todas as arestas conectadas a ele (source ou target)
+      setNodes(nds => nds.filter(n => n.id !== id));
+      setEdges(eds => eds.filter(e => e.source !== id && e.target !== id));
+      return;
+    }
+
+    if (action === 'duplicate') {
+      const original = nodes.find(n => n.id === id);
+      if (!original) return;
+      rfAddNodes([{
+        ...original,
+        id: `${original.type}_${Date.now()}`,
+        position: { x: original.position.x + 48, y: original.position.y + 48 },
+        selected: false,
+        data: { ...original.data },
+      } as SpaceNode]);
+      return;
+    }
+
+    // start / add → dispara a geração desse nó (o GeneratorNode escuta o evento).
+    // "Adicionar criação" usa a mesma ação (cada geração já anexa uma nova saída).
+    if (action === 'start' || action === 'add') {
+      window.dispatchEvent(new CustomEvent('space:node-generate', { detail: { id } }));
+    }
+  }, [nodeMenu, nodes, setNodes, setEdges, rfAddNodes]);
+
+  // Atalhos de teclado: undo/redo (ignora quando digitando em campo de texto)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return;
+      if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        redo();
+      } else if (e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
 
   const createNode = useCallback((type: 'image' | 'text' | 'generator') => {
     closeMenu();
@@ -186,7 +253,12 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
   }, [uid, spaceId, name]);
 
   return (
-    <div className={styles.editor} onDragOver={onDragOver} onDrop={onDrop} onClick={contextMenu ? closeMenu : undefined}>
+    <div
+      className={styles.editor}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onClick={contextMenu || nodeMenu ? () => { closeMenu(); closeNodeMenu(); } : undefined}
+    >
       {/* Toolbar */}
       <div className={styles.toolbar}>
         <button className={styles.backBtn} onClick={onClose} title="Voltar">
@@ -234,14 +306,28 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onPaneContextMenu={onPaneContextMenu}
+          onNodeContextMenu={onNodeContextMenu}
           fitView={loaded && nodes.length > 0}
           deleteKeyCode={['Delete', 'Backspace']}
           multiSelectionKeyCode="Shift"
+          panOnDrag={tool === 'pan' ? true : [1]}
+          selectionOnDrag={tool === 'select'}
+          defaultEdgeOptions={{ type: 'default', style: { stroke: 'rgba(170, 172, 182, 0.6)', strokeWidth: 1.5 } }}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
           <Controls />
           <MiniMap nodeColor={() => 'var(--red)'} maskColor="rgba(0,0,0,0.2)" />
         </ReactFlow>
+
+        {/* Barra de ferramentas vertical (lateral esquerda) */}
+        <CanvasToolbar
+          tool={tool}
+          onToolChange={setTool}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+        />
       </div>
 
       {/* Aviso de erro de upload (ex.: CORS) */}
@@ -251,13 +337,24 @@ function SpaceEditorInner({ uid, spaceId, spaceName, onClose }: Props) {
         </div>
       )}
 
-      {/* Menu de contexto (botão direito) */}
+      {/* Menu de contexto do CANVAS (botão direito no vazio) — paleta de nós */}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={closeMenu}
           onCreate={handleMenuCreate}
+        />
+      )}
+
+      {/* Menu de contexto do NÓ (botão direito em cima do nó) */}
+      {nodeMenu && (
+        <NodeMenu
+          x={nodeMenu.x}
+          y={nodeMenu.y}
+          canGenerate={nodeMenu.canGenerate}
+          onAction={onNodeMenuAction}
+          onClose={closeNodeMenu}
         />
       )}
     </div>
