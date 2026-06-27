@@ -255,8 +255,16 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
         </button>
       </NodeToolbar>
 
-      <Handle type="target" position={Position.Left} id="ref-in" className={styles.handle}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      {/* ENTRADA (referência) — canto inferior esquerdo (altura da barra de controles) */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="ref-in"
+        className={styles.handle}
+        style={{ top: 'auto', bottom: 20, transform: 'translate(-50%, 50%)' }}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span className={`${styles.handleTip} ${styles.tipLeft}`}>Referência</span>
       </Handle>
 
       <div className={styles.inner}>
@@ -285,8 +293,16 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
       </div>
       </div>
 
-      <Handle type="source" position={Position.Right} id="gen-out" className={styles.handle}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      {/* SAÍDA (imagem gerada) — canto superior direito (altura da barra de título) */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="gen-out"
+        className={styles.handle}
+        style={{ top: 20, bottom: 'auto', transform: 'translate(50%, -50%)' }}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span className={`${styles.handleTip} ${styles.tipRight}`}>Imagem gerada</span>
       </Handle>
     </div>
   );
