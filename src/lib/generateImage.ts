@@ -75,3 +75,24 @@ export async function generateImagesForSpace(opts: {
   }
   return successful;
 }
+
+// Gera UMA imagem (FASE A — cada quadro preenche de forma independente conforme
+// fica pronto). Recebe as imagens de referência JÁ convertidas para data URL
+// (a conversão acontece uma vez no nó), preservando a lógica de referência atual.
+export async function generateOneImageForSpace(opts: {
+  provider: Provider;
+  model: AnyImageModel;
+  promptText: string;
+  referenceDataUrls?: string[];
+  ratio: string;
+}): Promise<string> {
+  const { provider, model, promptText, referenceDataUrls = [], ratio } = opts;
+  const size = SIZE_MAP[ratio] ?? '1024x1024';
+
+  const endpoint = provider === 'google' ? '/api/generate-gemini' : '/api/generate-openai';
+  const payload = provider === 'google'
+    ? { model, promptText, referenceImages: referenceDataUrls }
+    : { model, promptText, referenceImages: referenceDataUrls, size, quality: 'medium' };
+
+  return callApi(endpoint, payload);
+}

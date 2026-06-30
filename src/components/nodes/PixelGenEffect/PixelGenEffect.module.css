@@ -1,0 +1,8 @@
+/* Efeito de geração por pixels — preenche o container, respeitando o ratio do pai. */
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}

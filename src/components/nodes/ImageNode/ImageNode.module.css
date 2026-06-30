@@ -54,6 +54,53 @@
   padding: 32px;
 }
 
+/* Quadro em geração: efeito de pixels preenchendo a área (no formato/ratio). */
+.genFill {
+  position: absolute;
+  inset: 0;
+  background: #0d0d0f;
+  overflow: hidden;
+}
+.genLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(241, 241, 243, 0.82);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Quadro que falhou na geração. */
+.errorFill {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #0d0d0f;
+  color: #ff8a85;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Transição suave do efeito → imagem real quando ela chega. */
+.imgReveal { animation: imgReveal 0.45s ease both; }
+@keyframes imgReveal {
+  from { opacity: 0; transform: scale(1.015); filter: blur(6px); }
+  to   { opacity: 1; transform: scale(1);     filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .imgReveal { animation: none; }
+}
+
 .label {
   font-size: 11px;
   color: var(--text3);

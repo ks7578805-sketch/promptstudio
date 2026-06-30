@@ -5,11 +5,12 @@ import {
 } from '@xyflow/react';
 import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../lib/firebase';
-import { generateImagesForSpace } from '../../../lib/generateImage';
-import type { GeneratorNodeData, ImageNodeData, SpaceNode, Ratio } from '../../../lib/spacesTypes';
+import { generateOneImageForSpace, urlToDataUrl } from '../../../lib/generateImage';
+import type { GeneratorNodeData, ImageNodeData, SpaceNode, SpaceEdge, Ratio } from '../../../lib/spacesTypes';
 import { MODEL_LABELS, PROVIDER_INFO } from '../../../lib/types';
 import type { Provider, AnyImageModel, GeminiModel, OpenAIModel } from '../../../lib/types';
 import { RatioControl } from './RatioControl';
+import { PixelGenEffect } from '../PixelGenEffect/PixelGenEffect';
 import styles from './GeneratorNode.module.css';
 
 const GEMINI_MODELS: GeminiModel[] = ['gemini-2.5-flash-image', 'gemini-3.1-flash-image', 'gemini-3-pro-image'];
@@ -68,66 +69,90 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
     if (status === 'generating' || !data.prompt.trim()) return;
     setStatus('generating');
     setError(null);
+    setPreview(null);
 
-    try {
-      // Coleta imagens de referência dos ImageNodes conectados
-      const connectedEdges = getEdges().filter(e => e.target === id && e.targetHandle === 'ref-in');
-      const refUrls: string[] = [];
-      for (const edge of connectedEdges) {
-        const sourceNode = getNode(edge.source) as SpaceNode | undefined;
-        if (sourceNode?.data?.type === 'image') {
-          refUrls.push((sourceNode.data as ImageNodeData).url);
-        }
+    const count = Math.max(1, data.count);
+    const ratio = data.ratio;
+    const label = data.prompt.slice(0, 30);
+    const batchId = Date.now();
+    const spacing = 320;
+    const startY = positionAbsoluteY - ((count - 1) * spacing) / 2;
+
+    // Coleta imagens de referência dos ImageNodes conectados (lógica inalterada)
+    const connectedEdges = getEdges().filter(e => e.target === id && e.targetHandle === 'ref-in');
+    const refUrls: string[] = [];
+    for (const edge of connectedEdges) {
+      const sourceNode = getNode(edge.source) as SpaceNode | undefined;
+      if (sourceNode?.data?.type === 'image') {
+        refUrls.push((sourceNode.data as ImageNodeData).url);
       }
+    }
 
-      const results = await generateImagesForSpace({
-        provider: data.provider,
-        model: data.model,
-        promptText: data.prompt,
-        referenceImages: refUrls,
-        ratio: data.ratio,
-        count: data.count,
+    // 1) Cria IMEDIATAMENTE os N quadros à direita, já no formato (ratio) certo e
+    //    em estado "gerando" — antes de qualquer imagem chegar.
+    const nodeIds: string[] = [];
+    const placeholderNodes: SpaceNode[] = [];
+    const placeholderEdges: SpaceEdge[] = [];
+    for (let i = 0; i < count; i++) {
+      const nodeId = `imageNode_img_${batchId}_${i}`;
+      nodeIds.push(nodeId);
+      placeholderNodes.push({
+        id: nodeId,
+        type: 'image' as const,
+        position: { x: positionAbsoluteX + 460, y: startY + i * spacing },
+        data: { type: 'image' as const, url: '', status: 'generating' as const, ratio, label, spaceId: data.spaceId },
       });
+      placeholderEdges.push({
+        id: `edge_${id}_${nodeId}`,
+        source: id,
+        sourceHandle: 'gen-out',
+        target: nodeId,
+        targetHandle: 'img-in',
+      });
+    }
+    addNodes(placeholderNodes);
+    addEdges(placeholderEdges);
 
-      // Upload de cada resultado pro Storage e cria ImageNodes conectados
-      const newNodes: SpaceNode[] = [];
-      const newEdges = [];
-      const spacing = 320;
-      const startY = positionAbsoluteY - ((results.length - 1) * spacing) / 2;
+    // 2) Gera cada imagem de forma independente; conforme cada uma fica pronta,
+    //    preenche o quadro correspondente (sem esperar as outras).
+    try {
+      const refDataUrls = refUrls.length > 0 ? await Promise.all(refUrls.map(urlToDataUrl)) : [];
 
-      for (let i = 0; i < results.length; i++) {
-        const imageId = `img_${Date.now()}_${i}`;
-        const imgRef = storageRef(storage, `spaces/${data.spaceId}/images/${imageId}.png`);
-        await uploadString(imgRef, results[i], 'data_url');
-        const url = await getDownloadURL(imgRef);
+      const settled = await Promise.allSettled(nodeIds.map((nodeId, i) =>
+        generateOneImageForSpace({
+          provider: data.provider,
+          model: data.model,
+          promptText: data.prompt,
+          referenceDataUrls: refDataUrls,
+          ratio,
+        }).then(async (dataUrl) => {
+          const imageId = `img_${batchId}_${i}`;
+          const imgRef = storageRef(storage, `spaces/${data.spaceId}/images/${imageId}.png`);
+          await uploadString(imgRef, dataUrl, 'data_url');
+          const url = await getDownloadURL(imgRef);
+          updateNodeData(nodeId, { url, status: 'done' });
+          if (i === 0) setPreview(dataUrl);
+        }).catch((err) => {
+          updateNodeData(nodeId, { status: 'error' });
+          throw err;
+        })
+      ));
 
-        const nodeId = `imageNode_${imageId}`;
-        newNodes.push({
-          id: nodeId,
-          type: 'image' as const,
-          position: { x: positionAbsoluteX + 460, y: startY + i * spacing },
-          data: { type: 'image' as const, url, label: data.prompt.slice(0, 30), spaceId: data.spaceId },
-        });
-
-        newEdges.push({
-          id: `edge_${id}_${nodeId}`,
-          source: id,
-          sourceHandle: 'gen-out',
-          target: nodeId,
-          targetHandle: 'img-in',
-        });
+      const ok = settled.some(r => r.status === 'fulfilled');
+      if (!ok) {
+        const first = settled.find(r => r.status === 'rejected') as PromiseRejectedResult | undefined;
+        const msg = first?.reason instanceof Error ? first.reason.message : 'Falha ao gerar imagens';
+        setError(msg);
+        setStatus('error');
+      } else {
+        setStatus('idle');
       }
-
-      addNodes(newNodes);
-      addEdges(newEdges);
-      setPreview(results[0] ?? null);
-      setStatus('idle');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(msg);
       setStatus('error');
     }
-  }, [status, data, id, positionAbsoluteX, positionAbsoluteY, getEdges, getNode, addNodes, addEdges]);
+  }, [status, data, id, positionAbsoluteX, positionAbsoluteY, getEdges, getNode, addNodes, addEdges, updateNodeData]);
 
   // Permite que o menu de contexto do nó (no SpaceEditor) dispare a geração deste nó.
   useEffect(() => {
@@ -280,7 +305,7 @@ export function GeneratorNode({ id, data, selected, positionAbsoluteX, positionA
       {/* Corpo: grande área escura de preview (flex:1); prompt + controles sobrepostos na base */}
       <div className={styles.body}>
         {generating ? (
-          <div className={styles.previewLoading}><span className={styles.spinnerLg} /></div>
+          <div className={styles.previewLoading}><PixelGenEffect /></div>
         ) : preview ? (
           <img src={preview} alt="resultado" className={styles.previewImg} draggable={false} />
         ) : (

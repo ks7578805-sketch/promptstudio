@@ -8,6 +8,12 @@ export interface ImageNodeData extends Record<string, unknown> {
   url: string;
   label?: string;
   spaceId: string;
+  /* Estado do quadro durante a geração (FASE A — criação imediata dos quadros).
+     'generating' → quadro vazio mostrando o efeito de pixels até a imagem chegar.
+     'done'/ausente → imagem pronta (comportamento normal). 'error' → falhou. */
+  status?: 'generating' | 'done' | 'error';
+  /* Proporção do quadro enquanto ainda está vazio (placeholder no formato certo). */
+  ratio?: Ratio;
 }
 
 export interface TextNodeData extends Record<string, unknown> {
